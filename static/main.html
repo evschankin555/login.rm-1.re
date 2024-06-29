@@ -12,6 +12,19 @@
             height: auto;
             margin-bottom: 10px;
         }
+        #photo {
+            display: none;
+            width: 100%;
+            max-width: 600px;
+            height: auto;
+            margin-top: 10px;
+        }
+        @media (max-width: 768px) {
+            .btn {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -44,9 +57,11 @@
     <div class="row mb-3 d-none" id="cameraContainer">
         <div class="col-12 text-center">
             <video id="video" autoplay></video>
-            <button id="takePhotoButton" class="btn btn-primary">Сделать фото</button>
+            <button id="takePhotoButton" class="btn btn-primary mt-3">Сделать фото</button>
             <canvas id="canvas" class="d-none"></canvas>
-            <img id="photo" alt="Your photo will appear here">
+            <div class="text-center">
+                <img id="photo" alt="Your photo will appear here">
+            </div>
         </div>
     </div>
 </div>
@@ -104,9 +119,12 @@
 
     function takePhoto() {
         const context = canvas.getContext('2d');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
         const imageDataURL = canvas.toDataURL('image/png');
         photo.setAttribute('src', imageDataURL);
+        photo.style.display = 'block';
         uploadPhoto(imageDataURL);
     }
 
