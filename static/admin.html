@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админка</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+</head>
+<body>
+
+<div class="container">
+    <!-- Login Modal -->
+    <div class="modal fade" id="loginModal" tabindex="-1" role="dialog" aria-labelledby="loginModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="loginModalLabel">Login</h5>
+                </div>
+                <div class="modal-body">
+                    <form id="loginForm">
+                        <div class="form-group">
+                            <label for="username">Username</label>
+                            <input type="text" class="form-control" id="username" name="username" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Password</label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Login</button>
+                    </form>                    
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div id="mainContent" style="display: none;">
+        <div class="row mb-3">
+            <div class="col-12 text-center">
+                <h5 id="departmentMessage">Подразделение не выбрано</h5>
+            </div>
+        </div>
+        <div class="d-flex justify-content-between my-3">
+            <div class="col-3">
+                <div class="dropdown">
+                    <button class="btn btn-primary dropdown-toggle" type="button" id="menuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Меню
+                    </button>
+                    <div class="dropdown-menu" aria-labelledby="menuButton">
+                        <a class="dropdown-item" href="/">Пропуск</a>
+                        <a class="dropdown-item active" href="#">Администрирование</a>
+                    </div>
+                </div>
+            </div>
+            <button class="btn btn-primary" id="bindDepartmentButton">Привязать подразделение</button>
+            <button class="btn btn-primary" id="employeesButton">Сотрудники</button>
+        </div>
+        <div class="d-flex justify-content-between my-3">
+            <h6>База обновлена: <h6 id="updateBase"></h6></h6>
+            <button class="btn btn-primary" id="updateBaseBtn">Обновить базу</button>   
+        </div>
+    </div>
+
+    <!-- Department Binding Section -->
+    <div id="departmentSection" style="display: none;">
+        <button class="btn btn-primary menuBtn">Назад</button>
+        <div class="form-group">
+            <label for="departmentSelect">Выберите подразделение</label>
+            <select class="form-control" id="departmentSelect" style="width: 100%;">
+                <option></option>
+                <!-- Options will be populated via API -->
+            </select>
+        </div>
+        <button class="btn btn-primary" id="confirmBindDepartmentButton" disabled>Привязать</button>
+    </div>
+
+    <!-- Employees Section -->
+    <div id="employeesSection" style="display: none;">
+        <button class="btn btn-primary menuBtn">Назад</button>
+        <div class="form-group">
+            <label for="employeeSelect">Выберите сотрудника</label>
+            <select class="form-control" id="employeeSelect" style="width: 100%;">
+                <option></option>
+                <!-- Options will be populated via API -->
+            </select>
+        </div>
+        <div id="photoBlock" class="border p-3" style="min-height: 200px;">
+            <!-- Photo will be displayed here -->
+        </div>
+        <div class="d-flex justify-content-between my-2">
+            <button class="btn btn-secondary" id="takePhotoButton" disabled>Сделать фото</button>
+            <button class="btn btn-primary" id="bindPhotoButton" disabled>Привязать фото</button>
+        </div>
+        <div id="photoList">
+            <!-- Photo list will be populated here -->
+        </div>
+    </div>
+
+    <!-- Hidden file input for selecting a photo -->
+    <input type="file" id="photoInput" accept="image/*" style="display: none;">
+
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+    function setCookie(name, value, days) {
+        const date = new Date();
+        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+        const expires = "expires=" + date.toUTCString();
+        document.cookie = name + "=" + encodeURIComponent(JSON.stringify(value)) + ";" + expires + ";path=/";
+    }
+    function getCookie(name) {
+        const nameEQ = name + "=";
+        const ca = document.cookie.split(';');
+        for (let i = 0; i < ca.length; i++) {
+            let c = ca[i];
+            while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+            if (c.indexOf(nameEQ) === 0) {
+                return JSON.parse(decodeURIComponent(c.substring(nameEQ.length, c.length)));
+            }
+        }
+        return null;
+    }
+</script>
+
+<script>
+    function setDivision() {
+        let division = getCookie('division');
+        if (division) {
+            document.getElementById('departmentMessage').textContent = 'Подразделение: ' + division.name;
+        }
+    }
+    setDivision();
+</script>
+
+<script>
+    var hash_admin = null;
+    var select_user_id = null;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        $('#loginModal').modal('show');
+
+        document.getElementById('loginForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            console.log(event);
+            const form = event.target;
+            const formData = new FormData(form);
+            const data = {};
+
+            formData.forEach((value, key) => {
+                data[key] = value;
+            });
+            // Perform login validation here
+            fetch('/login', {
+                method: 'POST',
+                body: JSON.stringify(data),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('mainContent').style.display = 'block';
+                    $('#loginModal').modal('hide');
+                    hash_admin = data.hash;
+
+                    loadBaseStatus();
+                } else {
+                    console.error('Request failed with status:', response.status);
+                    showCenteredBlock('Повторите попытку');
+                }
+            })
+            .catch(error => {
+                console.error('Fetch error:', error);
+                showCenteredBlock('Повторите попытку');
+            });
+        });
+
+        document.getElementById('bindDepartmentButton').addEventListener('click', function() {
+            document.getElementById('mainContent').style.display = 'none';
+            document.getElementById('departmentSection').style.display = 'block';
+            document.getElementById('employeesSection').style.display = 'none';
+            loadDepartments();
+        });
+
+        document.getElementById('employeesButton').addEventListener('click', function() {
+            document.getElementById('mainContent').style.display = 'none';
+            document.getElementById('departmentSection').style.display = 'none';
+            document.getElementById('employeesSection').style.display = 'block';
+            loadEmployees();
+        });
+
+        document.getElementById('confirmBindDepartmentButton').addEventListener('click', function() {
+            var departmentSelect = document.getElementById('departmentSelect');
+            var selectedDepartment = departmentSelect.value;
+            var selectedDepartmentText = departmentSelect.options[selectedDepartment].textContent;
+            var departmentGuid = departmentSelect.options[selectedDepartment].getAttribute('data-department-guid');
+            // Set department ID and name in cookies
+            //document.cookie = "department=" + selectedDepartment;
+            document.getElementById('departmentSection').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+
+            setCookie('division', {name: selectedDepartmentText, id: selectedDepartment, department_guid: departmentGuid}, 30);
+            setDivision();
+        });
+
+        $('#employeeSelect').on('select2:select', function (e) {
+            document.getElementById('takePhotoButton').disabled = false;
+            // Send request to load photos for selected employee
+            //select_user_id = this.empl_code;
+
+            var selectedOption = e.params.data.element;
+            select_user_id = $(selectedOption).data('empl-code');
+
+            loadEmployeePhotos(select_user_id);  // Pass the selected employee ID
+        });
+
+        document.getElementById('takePhotoButton').addEventListener('click', function() {
+            // Trigger file input click
+            document.getElementById('photoInput').click();
+        });
+
+        document.getElementById('photoInput').addEventListener('change', function(event) {
+            // Handle file selection
+            var file = event.target.files[0];
+            if (file) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    // Display the selected photo
+                    document.getElementById('photoBlock').innerHTML = '<img src="' + e.target.result + '" class="img-fluid">';
+                    document.getElementById('bindPhotoButton').disabled = false;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        /*
+        document.getElementById('bindPhotoButton').addEventListener('click', function() {
+            // Send photo to the server and display in the photo list
+            var photoSrc = document.querySelector('#photoBlock img').src;
+            // Simulate sending photo to server
+            var photoHTML = '<div class="d-flex align-items-center my-2"><img src="' + photoSrc + '" class="img-thumbnail mr-2" style="width: 50px;"><button class="btn btn-danger btn-sm deletePhotoButton">Удалить</button></div>';
+            document.getElementById('photoList').insertAdjacentHTML('beforeend', photoHTML);
+            document.getElementById('photoBlock').innerHTML = '';
+            document.getElementById('bindPhotoButton').disabled = true;
+        });
+        */
+        document.getElementById('bindPhotoButton').addEventListener('click', function() {
+            var fileInput = document.getElementById('photoInput');
+            var file = fileInput.files[0];
+
+            if (file) {
+                var formData = new FormData();
+                formData.append('photo', file);
+                formData.append('hash', hash_admin);
+                formData.append('user_id', select_user_id);
+                console.log(formData);
+
+                fetch('/save_photo', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Предполагается, что сервер возвращает URL загруженного изображения
+                    loadEmployeePhotos(select_user_id);
+                    document.getElementById('photoBlock').innerHTML = '';
+                    document.getElementById('bindPhotoButton').disabled = true;
+                })
+                .catch(error => {
+                    console.error('Ошибка загрузки изображения:', error);
+                });
+            } else {
+                console.error('Нет выбранного файла');
+            }
+        });
+
+        document.addEventListener('click', function(event) {
+            if (event.target && event.target.classList.contains('deletePhotoButton')) {
+                // Remove photo from server and UI
+                fetch('/delete_photo', {
+                    method: 'POST',
+                    body: JSON.stringify({hash: hash_admin, photo_url: event.target.closest('div').querySelector('img').src, user_id: select_user_id}),
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        event.target.closest('div').remove();
+                    } else {
+                        console.error('Request failed with status:', response.status);
+                        showCenteredBlock('Повторите попытку');
+                    }
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
+                    showCenteredBlock('Повторите попытку');
+                });
+
+            }
+        });
+
+        document.getElementById('updateBaseBtn').addEventListener('click', function() {
+            fetch('/update_base', {
+                method: 'POST',
+                body: JSON.stringify({hash: hash_admin}),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Предполагается, что сервер возвращает URL загруженного изображения
+                showCenteredBlock('Обновление запущено');
+                document.getElementById('updateBase').innerHTML = 'в процессе';
+
+            })
+            .catch(error => {
+                console.error('Ошибка загрузки изображения:', error);
+            });
+        });
+
+        document.querySelectorAll('.menuBtn').forEach(function(element) {
+            element.addEventListener('click', function() {
+                document.getElementById('mainContent').style.display = 'block';
+                document.getElementById('departmentSection').style.display = 'none';
+                document.getElementById('employeesSection').style.display = 'none';
+            });
+        });
+
+        // Functions to load data (mock implementations)
+        function loadDepartments() {
+            // Mock data
+            var departments = [
+                { id: 1, name: 'Отдел 1' },
+                { id: 2, name: 'Отдел 2' },
+                { id: 3, name: 'Отдел 3' }
+            ];
+
+            fetch('/get_departments', {
+                method: 'POST',
+                body: JSON.stringify({hash: hash_admin}),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {    
+                    departments =   data.departments;          
+                    var departmentSelect = document.getElementById('departmentSelect');
+                    departmentSelect.innerHTML = '<option></option>'; // Clear existing options and add placeholder
+                    var department_index = 1;
+                    departments.forEach(function(department) {
+                        var option = document.createElement('option');
+                        option.value = department_index;
+                        option.setAttribute('data-department-guid', department.unit_guid);
+                        option.text = '(' + department.unit_code + ') ' + department.unit_name;
+                        departmentSelect.appendChild(option);
+
+                        department_index += 1;
+                    });
+                } else {
+                    console.error('Request failed with status:', response.status);
+                    showCenteredBlock('Повторите попытку');
+                }
+            })
+            .catch(error => {
+                console.error('Fetch error:', error);
+                showCenteredBlock('Повторите попытку');
+            });
+
+            // Initialize Select2 on the department select
+            $('#departmentSelect').select2({
+                placeholder: 'Выберите подразделение',
+                allowClear: true
+            });
+
+            $('#departmentSelect').on('change', function() {
+                document.getElementById('confirmBindDepartmentButton').disabled = false;
+            });
+        }
+
+        function loadEmployees() {
+            // Mock data
+            var employees = [
+                { id: 1, name: 'Сотрудник 1' },
+                { id: 2, name: 'Сотрудник 2' },
+                { id: 3, name: 'Сотрудник 3' }
+            ];
+
+            fetch('/get_users', {
+                method: 'POST',
+                body: JSON.stringify({hash: hash_admin}),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    employees = data.users;
+                    var employeeSelect = document.getElementById('employeeSelect');
+                    employeeSelect.innerHTML = '<option></option>'; // Clear existing options and add placeholder
+                    var employee_index = 1;
+                    employees.forEach(function(employee) {
+                        var option = document.createElement('option');
+                        option.value = employee_index;
+                        option.setAttribute('data-empl-code', employee.empl_code);
+                        option.text = '(' + employee.empl_code + ') ' + employee.empl_name;
+                        employeeSelect.appendChild(option);
+
+                        employee_index += 1;
+                    });
+                } else {
+                    console.error('Request failed with status:', response.status);
+                    showCenteredBlock('Повторите попытку');
+                }
+            })
+            .catch(error => {
+                console.error('Fetch error:', error);
+                showCenteredBlock('Повторите попытку');
+            });
+
+            // Initialize Select2 on the employee select
+            $('#employeeSelect').select2({
+                placeholder: 'Выберите сотрудника',
+                allowClear: true
+            });
+        }
+
+        function loadEmployeePhotos(userId) {
+            // Mock data for photos (replace with actual API call)
+            var photos = [
+                { id: 1, url: 'images/1.jpeg' },
+                { id: 2, url: 'images/1.jpeg' }
+            ];
+            console.log(userId);
+            fetch('/get_users', {
+                method: 'POST',
+                body: JSON.stringify({hash: hash_admin, user_id: userId}),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    photos = data.users[0].images;
+                    console.log(photos);
+
+                    var photoList = document.getElementById('photoList');
+                        photoList.innerHTML = ''; // Clear existing photos
+                    
+                    if (photos.length > 0) {
+                        photos.forEach(function(photo) {
+                            var photoHTML = '<div class="d-flex align-items-center my-2"><img src="' + photo.url + '" class="img-thumbnail mr-2" style="width: 50px;"><button class="btn btn-danger btn-sm deletePhotoButton" data-photo-id="' + photo.id + '">Удалить</button></div>';
+                            photoList.insertAdjacentHTML('beforeend', photoHTML);
+                        });
+                    };
+
+                    // Ensure "Take Photo" button is enabled after loading photos
+                    document.getElementById('takePhotoButton').disabled = false;
+                } else {
+                    console.error('Request failed with status:', response.status);
+                    showCenteredBlock('Повторите попытку');
+                }
+            })
+            .catch(error => {
+                console.error('Fetch error:', error);
+                showCenteredBlock('Повторите попытку');
+            });
+        }
+
+        function loadBaseStatus() {
+            fetch('/base_status', {
+                method: 'POST',
+                body: JSON.stringify({hash: hash_admin}),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('updateBase').innerHTML = data.base_status.last_update;
+                } else {
+                    console.error('Request failed with status:', response.status);
+                    showCenteredBlock('Повторите попытку');
+                }
+            })
+            .catch(error => {
+                console.error('Fetch error:', error);
+                showCenteredBlock('Повторите попытку');
+            });
+        }
+    });
+</script>
+<script>
+    function showCenteredBlock(text) {
+        // Создаем элемент блока
+        const block = document.createElement('div');
+        block.textContent = text;
+
+        // Стилизуем блок
+        block.style.position = 'fixed';block.style.top = '50%';block.style.left = '50%';block.style.transform = 'translate(-50%, -50%)';block.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';block.style.color = '#fff';block.style.padding = '20px';block.style.borderRadius = '10px'; block.style.zIndex = '9999'; block.style.textAlign = 'center'; block.style.fontFamily = 'Arial, sans-serif';block.style.fontSize = '1.2em';
+
+        // Добавляем блок на страницу
+        document.body.appendChild(block);
+
+        // Удаляем блок через 4 секунды
+        setTimeout(() => {
+            block.remove();
+        }, 2000);
+    }
+</script>
+
+</body>
+</html>
+

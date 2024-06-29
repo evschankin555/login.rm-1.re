@@ -1,0 +1,17 @@
+{
+    "departments": {
+        "API": "https://rmone.corp.rarus-cloud.ru/rm1-personal/hs/rm1org/unit?auth_guid=A0F47AEE-014F-4D8E-9697-291595790FF7",
+        "login": "robot_json",
+        "password": "robotjson2023_" 
+    },
+    "users": {
+        "API": "https://rmone.corp.rarus-cloud.ru/rm1-personal/hs/rm1org/empl?auth_guid=A0F47AEE-014F-4D8E-9697-291595790FF7",
+        "login": "robot_json",
+        "password": "robotjson2023_" 
+    },
+    "confirm_user": {
+        "API": "https://rmone.corp.rarus-cloud.ru/rm1-personal/hs/rm1biometry/add?auth_guid=A0F47AEE-014F-4D8E-9697-291595790FF7",
+        "login": "robot_json",
+        "password": "robotjson2023_" 
+    }
+}

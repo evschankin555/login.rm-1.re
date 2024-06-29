@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="8f571451-0536-4cbf-8fb8-16424542caee" name="82.202.173.184">
+        <fileTransfer rootFolder="/home/guitest/face_id/face_api" accessType="SFTP" host="82.202.173.184" port="22" sshConfigId="9d174188-3ea2-459f-8e4e-c66a405f838a" sshConfig="root@82.202.173.184:22 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>

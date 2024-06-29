@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Суперадминка</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+</head>
+<body>
+
+<div class="container">
+    <!-- Login Modal -->
+    <div class="modal fade" id="loginModal" tabindex="-1" role="dialog" aria-labelledby="loginModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="loginModalLabel">Login</h5>
+                </div>
+                <div class="modal-body">
+                    <form id="loginForm">
+                        <div class="form-group">
+                            <label for="username">Username</label>
+                            <input type="text" class="form-control" id="username" name="username" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Password</label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Login</button>
+                    </form>                    
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div id="mainContent" style="display: none;">
+        <div class="d-flex justify-content-between my-3">
+            <div class="col-3">
+                <div class="dropdown">
+                    <button class="btn btn-primary dropdown-toggle" type="button" id="menuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Меню
+                    </button>
+                    <div class="dropdown-menu" aria-labelledby="menuButton">
+                        <a class="dropdown-item" href="/">Пропуск</a>
+                        <a class="dropdown-item" href="/admin">Администрирование</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 d-flex justify-content-between">
+                <input type="text" class="form-control mr-2" id="searchById" placeholder="Поиск по ID">
+                <input type="text" class="form-control" id="searchByName" placeholder="Поиск по ФИО">
+            </div>
+            <button class="btn btn-success" id="addAdminButton">Добавить Админа</button>
+        </div>
+        <div id="adminList">
+            <!-- List of admins will be populated here -->
+        </div>
+    </div>
+    <div id="adminForm" style="display: none;" class="mb-4">
+        <button class="btn btn-primary menuBtn">Назад</button>
+        <div class="form-group">
+            <label for="adminCode">Код</label>
+            <select class="form-control" id="adminCode">
+                <!-- Options will be populated via API -->
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="adminName">ФИО</label>
+            <input type="text" class="form-control" id="adminName" readonly>
+        </div>
+        <div class="form-group">
+            <label for="adminLogin">Логин</label>
+            <input type="text" class="form-control" id="adminLogin" required>
+        </div>
+        <div class="form-group">
+            <label for="adminPassword">Пароль</label>
+            <input type="password" class="form-control" id="adminPassword" required>
+        </div>
+        <div class="form-group">
+            <label for="repeatPassword">Повторите пароль</label>
+            <input type="password" class="form-control" id="repeatPassword" required>
+        </div>
+        <button class="btn btn-primary" id="saveAdminButton">Сохранить</button>
+    </div>
+
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+    var hash_admin = null;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        $('#loginModal').modal('show');
+
+        document.getElementById('loginForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            const data = {};
+
+            formData.forEach((value, key) => {
+                data[key] = value;
+            });
+
+            fetch('/superlogin', {
+                method: 'POST',
+                body: JSON.stringify(data),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('mainContent').style.display = 'block';
+                    $('#loginModal').modal('hide');
+                    hash_admin = data.hash;
+                    console.log(hash_admin);
+                    loadAdmins();
+                } else {
+                    if (data.error) {
+                        showCenteredBlockMsg(data.error);
+                    }
+                    else {
+                        showCenteredBlockMsg('Повторите попытку');
+                    }
+                }
+            })
+            .catch(error => {
+                showCenteredBlockMsg('Повторите попытку');
+            });
+        });
+
+        document.getElementById('addAdminButton').addEventListener('click', function() {
+            document.getElementById('adminForm').style.display = 'block';
+            document.getElementById('mainContent').style.display = 'none';
+            loadAdminCodes();
+        });
+
+        document.getElementById('saveAdminButton').addEventListener('click', function() {
+            const adminData = {
+                code: document.getElementById('adminCode').value,
+                name: document.getElementById('adminName').value,
+                login: document.getElementById('adminLogin').value,
+                password: document.getElementById('adminPassword').value,
+                repeatPassword: document.getElementById('repeatPassword').value,
+                hash: hash_admin
+            };
+
+            if (adminData.password !== adminData.repeatPassword) {
+                showCenteredBlock('Пароли не совпадают');
+                return;
+            }
+
+            fetch('/add_admin', {
+                method: 'POST',
+                body: JSON.stringify(adminData),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadAdmins();
+                    document.getElementById('adminForm').style.display = 'none';
+                    document.getElementById('mainContent').style.display = 'block';
+
+                } else {
+                    if (data.error) {
+                        showCenteredBlock(data.error);
+                    }
+                    else {
+                        showCenteredBlock('Ошибка добавления админа');
+                    }
+                }
+            })
+            .catch(error => {
+                showCenteredBlock('Ошибка добавления админа');
+            });
+        });
+
+        document.getElementById('searchById').addEventListener('input', function() {
+            loadAdmins();
+        });
+
+        document.getElementById('searchByName').addEventListener('input', function() {
+            loadAdmins();
+        });
+
+        document.querySelectorAll('.menuBtn').forEach(function(element) {
+            element.addEventListener('click', function() {
+                document.getElementById('adminForm').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+            });
+        });
+
+        $('#adminCode').on('select2:select', function (e) {
+            //document.getElementById('takePhotoButton').disabled = false;
+            var selectedOption = e.params.data.element;
+            var select_user_id = $(selectedOption).data('empl-code');
+            // Send request to load photos for selected employee
+            //loadEmployeePhotos(this.value);  // Pass the selected employee ID
+            fetch('/get_users_sa', {
+                method: 'POST',
+                body: JSON.stringify({ hash: hash_admin, user_id: select_user_id}),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {   
+                document.getElementById('adminName').value = data.users[0].empl_name;
+            })
+            .catch(error => {
+                showCenteredBlock('Ошибка загрузки админов');
+            });
+        });
+
+        function loadAdmins() {
+            const searchByIdValue = document.getElementById('searchById').value;
+            const searchByNameValue = document.getElementById('searchByName').value;
+            fetch(`/get_admins`, {
+                method: 'POST',
+                body: JSON.stringify({ hash: hash_admin, id_filter: searchByIdValue, name_filter:searchByNameValue}),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const adminList = document.getElementById('adminList');
+                adminList.innerHTML = '';
+                data.admins.forEach(admin => {
+                    const adminDiv = document.createElement('div');
+                    adminDiv.classList.add('d-flex', 'justify-content-between', 'align-items-center', 'my-2');
+                    adminDiv.innerHTML = `
+                        <span>(${admin.id}) ${admin.name} (${admin.login})</span>
+                        <button class="btn btn-danger btn-sm deleteAdminButton" data-admin-id="${admin.id}">Удалить</button>
+                    `;
+                    adminList.appendChild(adminDiv);
+                });
+                setDeleteAdminListeners();
+            })
+            .catch(error => {
+                showCenteredBlock('Ошибка загрузки админов');
+            });
+        }
+
+        function loadAdminCodes() {
+            fetch('/get_users_sa', {
+                method: 'POST',
+                body: JSON.stringify({ hash: hash_admin }),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const adminCodeSelect = document.getElementById('adminCode');
+                /*
+                adminCodeSelect.innerHTML = '';
+                data.codes.forEach(code => {
+                    const option = document.createElement('option');
+                    option.value = code.id;
+                    option.textContent = code.name;
+                    adminCodeSelect.appendChild(option);
+                });
+
+                $('#adminCode').on('change', function() {
+                    const selectedOption = this.options[this.selectedIndex];
+                    document.getElementById('adminName').value = selectedOption.text;
+                });
+                */
+                adminCodeSelect.innerHTML = '<option></option>'; // Clear existing options and add placeholder
+                var option_index = 1;
+                data.users.forEach(function(employee) {
+                    var option = document.createElement('option');
+                    option.value = option_index;
+                    option.setAttribute('data-empl-code', employee.empl_code);
+                    option.text = '(' + employee.empl_code + ') ' + employee.empl_name;
+                    adminCodeSelect.appendChild(option);
+                    option_index += 1;
+                });
+
+                // Initialize Select2 on the employee select
+                $('#adminCode').select2({
+                    placeholder: 'Выберите сотрудника',
+                    allowClear: true
+                });
+            })
+            .catch(error => {
+                showCenteredBlock('Ошибка загрузки кодов');
+            });
+        }
+
+        function searchAdmins() {
+            const searchByIdValue = document.getElementById('searchById').value;
+            const searchByNameValue = document.getElementById('searchByName').value;
+            fetch(`/get_admins`, {
+                method: 'POST',
+                body: JSON.stringify({ hash: hash_admin, id_filter: searchByIdValue, name_filter:searchByNameValue}),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const adminList = document.getElementById('adminList');
+                adminList.innerHTML = '';
+                data.admins.forEach(admin => {
+                    const adminDiv = document.createElement('div');
+                    adminDiv.classList.add('d-flex', 'justify-content-between', 'align-items-center', 'my-2');
+                    adminDiv.innerHTML = `
+                        <span>${admin.name} (${admin.login})</span>
+                        <button class="btn btn-danger btn-sm deleteAdminButton" data-admin-id="${admin.id}">Удалить</button>
+                    `;
+                    adminList.appendChild(adminDiv);
+                });
+                setDeleteAdminListeners();
+            })
+            .catch(error => {
+                showCenteredBlock('Ошибка поиска админов');
+            });
+        }
+
+        function setDeleteAdminListeners() {
+            const deleteAdminButtons = document.querySelectorAll('.deleteAdminButton');
+            deleteAdminButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const adminId = this.getAttribute('data-admin-id');
+                    deleteAdmin(adminId);
+                });
+            });
+        }
+
+        function deleteAdmin(adminId) {
+            fetch(`/delete_admin/${adminId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${hash_admin}`
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadAdmins();
+                } else {
+                    showCenteredBlock('Ошибка удаления админа');
+                }
+            })
+            .catch(error => {
+                showCenteredBlock('Ошибка удаления админа');
+            });
+        }
+
+        function showCenteredBlock(message) {
+            const centeredBlock = document.createElement('div');
+            centeredBlock.style.position = 'fixed';
+            centeredBlock.style.top = '50%';
+            centeredBlock.style.left = '50%';
+            centeredBlock.style.transform = 'translate(-50%, -50%)';
+            centeredBlock.style.backgroundColor = '#fff';
+            centeredBlock.style.padding = '20px';
+            centeredBlock.style.border = '1px solid #ccc';
+            centeredBlock.style.boxShadow = '0px 0px 10px rgba(0,0,0,0.1)';
+            centeredBlock.innerHTML = `
+                <p>${message}</p>
+                <button class="btn btn-secondary" id="centeredBlockCloseButton">Закрыть</button>
+            `;
+            document.body.appendChild(centeredBlock);
+
+            document.getElementById('centeredBlockCloseButton').addEventListener('click', function() {
+                document.body.removeChild(centeredBlock);
+            });
+        }
+
+        function showCenteredBlockMsg(text) {
+            // Создаем элемент блока
+            const block = document.createElement('div');
+            block.textContent = text;
+
+            // Стилизуем блок
+            block.style.position = 'fixed';block.style.top = '50%';block.style.left = '50%';block.style.transform = 'translate(-50%, -50%)';block.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';block.style.color = '#fff';block.style.padding = '20px';block.style.borderRadius = '10px'; block.style.zIndex = '9999'; block.style.textAlign = 'center'; block.style.fontFamily = 'Arial, sans-serif';block.style.fontSize = '1.2em';
+
+            // Добавляем блок на страницу
+            document.body.appendChild(block);
+
+            // Удаляем блок через 4 секунды
+            setTimeout(() => {
+                block.remove();
+            }, 2000);
+        }
+
+    });
+</script>
+</body>
+</html>
