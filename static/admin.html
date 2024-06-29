@@ -6,6 +6,27 @@
     <title>Админка</title>
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        #video {
+            width: 100%;
+            max-width: 600px;
+            height: auto;
+            margin-bottom: 10px;
+        }
+        #photo {
+            display: none;
+            width: 100%;
+            max-width: 600px;
+            height: auto;
+            margin-top: 10px;
+        }
+        @media (max-width: 768px) {
+            .btn {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+        }
+    </style>
 </head>
 <body>
 
@@ -28,7 +49,7 @@
                             <input type="password" class="form-control" id="password" name="password" required>
                         </div>
                         <button type="submit" class="btn btn-primary">Login</button>
-                    </form>                    
+                    </form>
                 </div>
             </div>
         </div>
@@ -58,7 +79,7 @@
         </div>
         <div class="d-flex justify-content-between my-3">
             <h6>База обновлена: <h6 id="updateBase"></h6></h6>
-            <button class="btn btn-primary" id="updateBaseBtn">Обновить базу</button>   
+            <button class="btn btn-primary" id="updateBaseBtn">Обновить базу</button>
         </div>
     </div>
 
@@ -91,6 +112,14 @@
         <div class="d-flex justify-content-between my-2">
             <button class="btn btn-secondary" id="takePhotoButton" disabled>Сделать фото</button>
             <button class="btn btn-primary" id="bindPhotoButton" disabled>Привязать фото</button>
+        </div>
+        <div class="row mb-3 d-none" id="cameraContainer">
+            <div class="col-12 text-center">
+                <video id="video" autoplay></video>
+                <button id="capturePhotoButton" class="btn btn-primary mt-3">Сделать фото</button>
+                <canvas id="canvas" class="d-none"></canvas>
+                <img id="photo" alt="Your photo will appear here">
+            </div>
         </div>
         <div id="photoList">
             <!-- Photo list will be populated here -->
@@ -141,6 +170,10 @@
 <script>
     var hash_admin = null;
     var select_user_id = null;
+    var video = document.getElementById('video');
+    var canvas = document.getElementById('canvas');
+    var photo = document.getElementById('photo');
+    var cameraContainer = document.getElementById('cameraContainer');
 
     document.addEventListener('DOMContentLoaded', function() {
         $('#loginModal').modal('show');
@@ -163,23 +196,23 @@
                     'Content-Type': 'application/json'
                 }
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    document.getElementById('mainContent').style.display = 'block';
-                    $('#loginModal').modal('hide');
-                    hash_admin = data.hash;
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('mainContent').style.display = 'block';
+                        $('#loginModal').modal('hide');
+                        hash_admin = data.hash;
 
-                    loadBaseStatus();
-                } else {
-                    console.error('Request failed with status:', response.status);
+                        loadBaseStatus();
+                    } else {
+                        console.error('Request failed with status:', response.status);
+                        showCenteredBlock('Повторите попытку');
+                    }
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
                     showCenteredBlock('Повторите попытку');
-                }
-            })
-            .catch(error => {
-                console.error('Fetch error:', error);
-                showCenteredBlock('Повторите попытку');
-            });
+                });
         });
 
         document.getElementById('bindDepartmentButton').addEventListener('click', function() {
@@ -222,34 +255,61 @@
         });
 
         document.getElementById('takePhotoButton').addEventListener('click', function() {
-            // Trigger file input click
-            document.getElementById('photoInput').click();
+            startCamera();
         });
 
-        document.getElementById('photoInput').addEventListener('change', function(event) {
-            // Handle file selection
-            var file = event.target.files[0];
-            if (file) {
-                var reader = new FileReader();
-                reader.onload = function(e) {
-                    // Display the selected photo
-                    document.getElementById('photoBlock').innerHTML = '<img src="' + e.target.result + '" class="img-fluid">';
-                    document.getElementById('bindPhotoButton').disabled = false;
-                };
-                reader.readAsDataURL(file);
-            }
+        document.getElementById('capturePhotoButton').addEventListener('click', function() {
+            takePhoto();
         });
-        /*
-        document.getElementById('bindPhotoButton').addEventListener('click', function() {
-            // Send photo to the server and display in the photo list
-            var photoSrc = document.querySelector('#photoBlock img').src;
-            // Simulate sending photo to server
-            var photoHTML = '<div class="d-flex align-items-center my-2"><img src="' + photoSrc + '" class="img-thumbnail mr-2" style="width: 50px;"><button class="btn btn-danger btn-sm deletePhotoButton">Удалить</button></div>';
-            document.getElementById('photoList').insertAdjacentHTML('beforeend', photoHTML);
-            document.getElementById('photoBlock').innerHTML = '';
-            document.getElementById('bindPhotoButton').disabled = true;
-        });
-        */
+
+        function startCamera() {
+            cameraContainer.classList.remove('d-none');
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(stream => {
+                    video.srcObject = stream;
+                })
+                .catch(error => console.error('Error accessing media devices.', error));
+        }
+
+        function takePhoto() {
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imageDataURL = canvas.toDataURL('image/png');
+            photo.setAttribute('src', imageDataURL);
+            photo.style.display = 'block';
+            document.getElementById('bindPhotoButton').disabled = false; // Enable the "Bind Photo" button after taking photo
+            uploadPhoto(imageDataURL);
+        }
+
+        function uploadPhoto(imageDataURL) {
+            fetch(imageDataURL)
+                .then(res => res.blob())
+                .then(blob => {
+                    const formData = new FormData();
+                    formData.append('photo', blob, 'photo.png');
+                    formData.append('hash', hash_admin);
+                    formData.append('user_id', select_user_id);
+                    console.log(formData);
+
+                    fetch('/save_photo', {
+                        method: 'POST',
+                        body: formData
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            // Предполагается, что сервер возвращает URL загруженного изображения
+                            loadEmployeePhotos(select_user_id);
+                            document.getElementById('photoBlock').innerHTML = '';
+                            document.getElementById('bindPhotoButton').disabled = true; // Disable the button again after binding photo
+                        })
+                        .catch(error => {
+                            console.error('Ошибка загрузки изображения:', error);
+                        });
+                });
+        }
+
         document.getElementById('bindPhotoButton').addEventListener('click', function() {
             var fileInput = document.getElementById('photoInput');
             var file = fileInput.files[0];
@@ -265,16 +325,16 @@
                     method: 'POST',
                     body: formData
                 })
-                .then(response => response.json())
-                .then(data => {
-                    // Предполагается, что сервер возвращает URL загруженного изображения
-                    loadEmployeePhotos(select_user_id);
-                    document.getElementById('photoBlock').innerHTML = '';
-                    document.getElementById('bindPhotoButton').disabled = true;
-                })
-                .catch(error => {
-                    console.error('Ошибка загрузки изображения:', error);
-                });
+                    .then(response => response.json())
+                    .then(data => {
+                        // Предполагается, что сервер возвращает URL загруженного изображения
+                        loadEmployeePhotos(select_user_id);
+                        document.getElementById('photoBlock').innerHTML = '';
+                        document.getElementById('bindPhotoButton').disabled = true; // Disable the button after binding photo
+                    })
+                    .catch(error => {
+                        console.error('Ошибка загрузки изображения:', error);
+                    });
             } else {
                 console.error('Нет выбранного файла');
             }
@@ -290,19 +350,19 @@
                         'Content-Type': 'application/json'
                     }
                 })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        event.target.closest('div').remove();
-                    } else {
-                        console.error('Request failed with status:', response.status);
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            event.target.closest('div').remove();
+                        } else {
+                            console.error('Request failed with status:', response.status);
+                            showCenteredBlock('Повторите попытку');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Fetch error:', error);
                         showCenteredBlock('Повторите попытку');
-                    }
-                })
-                .catch(error => {
-                    console.error('Fetch error:', error);
-                    showCenteredBlock('Повторите попытку');
-                });
+                    });
 
             }
         });
@@ -315,16 +375,16 @@
                     'Content-Type': 'application/json'
                 }
             })
-            .then(response => response.json())
-            .then(data => {
-                // Предполагается, что сервер возвращает URL загруженного изображения
-                showCenteredBlock('Обновление запущено');
-                document.getElementById('updateBase').innerHTML = 'в процессе';
+                .then(response => response.json())
+                .then(data => {
+                    // Предполагается, что сервер возвращает URL загруженного изображения
+                    showCenteredBlock('Обновление запущено');
+                    document.getElementById('updateBase').innerHTML = 'в процессе';
 
-            })
-            .catch(error => {
-                console.error('Ошибка загрузки изображения:', error);
-            });
+                })
+                .catch(error => {
+                    console.error('Ошибка загрузки изображения:', error);
+                });
         });
 
         document.querySelectorAll('.menuBtn').forEach(function(element) {
@@ -351,31 +411,31 @@
                     'Content-Type': 'application/json'
                 }
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {    
-                    departments =   data.departments;          
-                    var departmentSelect = document.getElementById('departmentSelect');
-                    departmentSelect.innerHTML = '<option></option>'; // Clear existing options and add placeholder
-                    var department_index = 1;
-                    departments.forEach(function(department) {
-                        var option = document.createElement('option');
-                        option.value = department_index;
-                        option.setAttribute('data-department-guid', department.unit_guid);
-                        option.text = '(' + department.unit_code + ') ' + department.unit_name;
-                        departmentSelect.appendChild(option);
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        departments =   data.departments;
+                        var departmentSelect = document.getElementById('departmentSelect');
+                        departmentSelect.innerHTML = '<option></option>'; // Clear existing options and add placeholder
+                        var department_index = 1;
+                        departments.forEach(function(department) {
+                            var option = document.createElement('option');
+                            option.value = department_index;
+                            option.setAttribute('data-department-guid', department.unit_guid);
+                            option.text = '(' + department.unit_code + ') ' + department.unit_name;
+                            departmentSelect.appendChild(option);
 
-                        department_index += 1;
-                    });
-                } else {
-                    console.error('Request failed with status:', response.status);
+                            department_index += 1;
+                        });
+                    } else {
+                        console.error('Request failed with status:', response.status);
+                        showCenteredBlock('Повторите попытку');
+                    }
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
                     showCenteredBlock('Повторите попытку');
-                }
-            })
-            .catch(error => {
-                console.error('Fetch error:', error);
-                showCenteredBlock('Повторите попытку');
-            });
+                });
 
             // Initialize Select2 on the department select
             $('#departmentSelect').select2({
@@ -403,31 +463,31 @@
                     'Content-Type': 'application/json'
                 }
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    employees = data.users;
-                    var employeeSelect = document.getElementById('employeeSelect');
-                    employeeSelect.innerHTML = '<option></option>'; // Clear existing options and add placeholder
-                    var employee_index = 1;
-                    employees.forEach(function(employee) {
-                        var option = document.createElement('option');
-                        option.value = employee_index;
-                        option.setAttribute('data-empl-code', employee.empl_code);
-                        option.text = '(' + employee.empl_code + ') ' + employee.empl_name;
-                        employeeSelect.appendChild(option);
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        employees = data.users;
+                        var employeeSelect = document.getElementById('employeeSelect');
+                        employeeSelect.innerHTML = '<option></option>'; // Clear existing options and add placeholder
+                        var employee_index = 1;
+                        employees.forEach(function(employee) {
+                            var option = document.createElement('option');
+                            option.value = employee_index;
+                            option.setAttribute('data-empl-code', employee.empl_code);
+                            option.text = '(' + employee.empl_code + ') ' + employee.empl_name;
+                            employeeSelect.appendChild(option);
 
-                        employee_index += 1;
-                    });
-                } else {
-                    console.error('Request failed with status:', response.status);
+                            employee_index += 1;
+                        });
+                    } else {
+                        console.error('Request failed with status:', response.status);
+                        showCenteredBlock('Повторите попытку');
+                    }
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
                     showCenteredBlock('Повторите попытку');
-                }
-            })
-            .catch(error => {
-                console.error('Fetch error:', error);
-                showCenteredBlock('Повторите попытку');
-            });
+                });
 
             // Initialize Select2 on the employee select
             $('#employeeSelect').select2({
@@ -450,33 +510,33 @@
                     'Content-Type': 'application/json'
                 }
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    photos = data.users[0].images;
-                    console.log(photos);
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        photos = data.users[0].images;
+                        console.log(photos);
 
-                    var photoList = document.getElementById('photoList');
+                        var photoList = document.getElementById('photoList');
                         photoList.innerHTML = ''; // Clear existing photos
-                    
-                    if (photos.length > 0) {
-                        photos.forEach(function(photo) {
-                            var photoHTML = '<div class="d-flex align-items-center my-2"><img src="' + photo.url + '" class="img-thumbnail mr-2" style="width: 50px;"><button class="btn btn-danger btn-sm deletePhotoButton" data-photo-id="' + photo.id + '">Удалить</button></div>';
-                            photoList.insertAdjacentHTML('beforeend', photoHTML);
-                        });
-                    };
 
-                    // Ensure "Take Photo" button is enabled after loading photos
-                    document.getElementById('takePhotoButton').disabled = false;
-                } else {
-                    console.error('Request failed with status:', response.status);
+                        if (photos.length > 0) {
+                            photos.forEach(function(photo) {
+                                var photoHTML = '<div class="d-flex align-items-center my-2"><img src="' + photo.url + '" class="img-thumbnail mr-2" style="width: 50px;"><button class="btn btn-danger btn-sm deletePhotoButton" data-photo-id="' + photo.id + '">Удалить</button></div>';
+                                photoList.insertAdjacentHTML('beforeend', photoHTML);
+                            });
+                        };
+
+                        // Ensure "Take Photo" button is enabled after loading photos
+                        document.getElementById('takePhotoButton').disabled = false;
+                    } else {
+                        console.error('Request failed with status:', response.status);
+                        showCenteredBlock('Повторите попытку');
+                    }
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
                     showCenteredBlock('Повторите попытку');
-                }
-            })
-            .catch(error => {
-                console.error('Fetch error:', error);
-                showCenteredBlock('Повторите попытку');
-            });
+                });
         }
 
         function loadBaseStatus() {
@@ -487,19 +547,19 @@
                     'Content-Type': 'application/json'
                 }
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    document.getElementById('updateBase').innerHTML = data.base_status.last_update;
-                } else {
-                    console.error('Request failed with status:', response.status);
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('updateBase').innerHTML = data.base_status.last_update;
+                    } else {
+                        console.error('Request failed with status:', response.status);
+                        showCenteredBlock('Повторите попытку');
+                    }
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
                     showCenteredBlock('Повторите попытку');
-                }
-            })
-            .catch(error => {
-                console.error('Fetch error:', error);
-                showCenteredBlock('Повторите попытку');
-            });
+                });
         }
     });
 </script>
@@ -522,6 +582,6 @@
     }
 </script>
 
+
 </body>
 </html>
-
