@@ -7,187 +7,214 @@
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <style>
         #video {
-          width: 100%;
-          max-width: 600px;
-          height: auto;
-          margin-bottom: 10px;
+            width: 100%;
+            max-width: 600px;
+            height: auto;
+            margin-bottom: 10px;
         }
-      </style>
+    </style>
 </head>
 <body>
-    <!-- Основная страница -->
-    <div id="mainPage" class="container mt-5">
-        <div class="row mb-3">
-            <div class="col-12 text-center">
-                <h5 id="departmentMessage">Подразделение не выбрано</h5>
-            </div>
+<!-- Основная страница -->
+<div id="mainPage" class="container mt-5">
+    <div class="row mb-3">
+        <div class="col-12 text-center">
+            <h5 id="departmentMessage">Подразделение не выбрано</h5>
         </div>
-        <div class="row mb-3">
-            <div class="col-3">
-                <div class="dropdown">
-                    <button class="btn btn-primary dropdown-toggle" type="button" id="menuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        Меню
-                    </button>
-                    <div class="dropdown-menu" aria-labelledby="menuButton">
-                        <a class="dropdown-item active" href="#">Пропуск</a>
-                        <a class="dropdown-item" href="admin">Администрирование</a>
-                    </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-3">
+            <div class="dropdown">
+                <button class="btn btn-primary dropdown-toggle" type="button" id="menuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Меню
+                </button>
+                <div class="dropdown-menu" aria-labelledby="menuButton">
+                    <a class="dropdown-item active" href="#">Пропуск</a>
+                    <a class="dropdown-item" href="admin">Администрирование</a>
                 </div>
             </div>
-            <input type="file" id="fileInput" class="d-none">
-            <div class="col-6 text-center">
-                <button id="uploadFileButtonCome" class="btn btn-secondary">Выбрать файл</button>
-            </div>
-            <div class="col-3 text-center">
-                <button id="uploadFileButtonWent" class="btn btn-secondary">Выбрать файл Уход</button>
-            </div>
+        </div>
+        <div class="col-6 text-center">
+            <button id="uploadFileButtonCome" class="btn btn-secondary">Сделать фото</button>
+        </div>
+        <div class="col-3 text-center">
+            <button id="uploadFileButtonWent" class="btn btn-secondary">Сделать фото Уход</button>
         </div>
     </div>
-
-    <!-- Страница после отправки фото -->
-    <div id="responsePage" class="container mt-5 d-none">
-        <div class="row mb-3">
-            <div class="col-12 text-center">
-                <h5 id="question">Вы такой-то?</h5>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-6 text-right">
-                <button id="yesButton" class="btn btn-success">Да</button>
-            </div>
-            <div class="col-6 text-left">
-                <button id="noButton" class="btn btn-danger">Нет</button>
-            </div>
+    <div class="row mb-3 d-none" id="cameraContainer">
+        <div class="col-12 text-center">
+            <video id="video" autoplay></video>
+            <button id="takePhotoButton" class="btn btn-primary">Сделать фото</button>
+            <canvas id="canvas" class="d-none"></canvas>
+            <img id="photo" alt="Your photo will appear here">
         </div>
     </div>
+</div>
 
-    <!-- Скрипты -->
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script>
-        let came_or_went = '';
-        var select_user;
-        var current_time_user;
+<!-- Страница после отправки фото -->
+<div id="responsePage" class="container mt-5 d-none">
+    <div class="row mb-3">
+        <div class="col-12 text-center">
+            <h5 id="question">Вы такой-то?</h5>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-6 text-right">
+            <button id="yesButton" class="btn btn-success">Да</button>
+        </div>
+        <div class="col-6 text-left">
+            <button id="noButton" class="btn btn-danger">Нет</button>
+        </div>
+    </div>
+</div>
 
-        document.getElementById('uploadFileButtonCome').addEventListener('click', function() {
-            document.getElementById('fileInput').click();
-            came_or_went = 'came';
-        });
+<!-- Скрипты -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script>
+    let came_or_went = '';
+    var select_user;
+    var current_time_user;
+    var video = document.getElementById('video');
+    var canvas = document.getElementById('canvas');
+    var photo = document.getElementById('photo');
+    var cameraContainer = document.getElementById('cameraContainer');
 
-        document.getElementById('uploadFileButtonWent').addEventListener('click', function() {
-            document.getElementById('fileInput').click();
-            came_or_went = 'went';
-        });
+    document.getElementById('uploadFileButtonCome').addEventListener('click', function() {
+        startCamera();
+        came_or_went = 'came';
+    });
 
-        document.getElementById('fileInput').addEventListener('change', function() {
-            const file = this.files[0];
-            if (file) {
+    document.getElementById('uploadFileButtonWent').addEventListener('click', function() {
+        startCamera();
+        came_or_went = 'went';
+    });
+
+    document.getElementById('takePhotoButton').addEventListener('click', function() {
+        takePhoto();
+    });
+
+    function startCamera() {
+        cameraContainer.classList.remove('d-none');
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+            })
+            .catch(error => console.error('Error accessing media devices.', error));
+    }
+
+    function takePhoto() {
+        const context = canvas.getContext('2d');
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const imageDataURL = canvas.toDataURL('image/png');
+        photo.setAttribute('src', imageDataURL);
+        uploadPhoto(imageDataURL);
+    }
+
+    function uploadPhoto(imageDataURL) {
+        fetch(imageDataURL)
+            .then(res => res.blob())
+            .then(blob => {
                 const formData = new FormData();
-                formData.append('photo', file);
+                formData.append('photo', blob, 'photo.png');
 
                 fetch('/uploadphoto/', {
                     method: 'POST',
                     body: formData
                 })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        document.querySelector('.container').classList.add('d-none');   
-                        document.getElementById('responsePage').classList.remove('d-none');
-                        document.getElementById('question').textContent = `Вы ${data.user.name}?`;
-                        console.log(data);
-                        select_user = data.user.code;
-                        current_time_user = data.info.current_time;
-                    }
-                })
-                .catch(error => console.error('Error:', error));
-            }
-            document.getElementById('fileInput').value = '';
-        });
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            document.querySelector('.container').classList.add('d-none');
+                            document.getElementById('responsePage').classList.remove('d-none');
+                            document.getElementById('question').textContent = `Вы ${data.user.name}?`;
+                            select_user = data.user.code;
+                            current_time_user = data.info.current_time;
+                        }
+                    })
+                    .catch(error => console.error('Error:', error));
+            });
+    }
 
-        document.getElementById('yesButton').addEventListener('click', function() {
-            fetch('/confirm', {
-                method: 'POST',
-                body: JSON.stringify({ confirmed: true, came_or_went: came_or_went, department_guid: division.department_guid, user_code: select_user, current_time_user: current_time_user}),
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
+    document.getElementById('yesButton').addEventListener('click', function() {
+        fetch('/confirm', {
+            method: 'POST',
+            body: JSON.stringify({ confirmed: true, came_or_went: came_or_went, department_guid: division.department_guid, user_code: select_user, current_time_user: current_time_user}),
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
                     document.querySelectorAll('.container').forEach(function(element) {
                         element.classList.add('d-none');
                     });
-                    //console.log(document.querySelector('.container'));
                     document.getElementById('mainPage').classList.remove('d-none');
-                    //alert('Добро пожаловать!');
                     showCenteredBlock('Добро пожаловать!');
-                    // Открыть основное окно (здесь можно заменить alert на фактическое открытие окна)
                 }
             })
             .catch(error => console.error('Error:', error));
+    });
+
+    document.getElementById('noButton').addEventListener('click', function() {
+        document.querySelectorAll('.container').forEach(function(element) {
+            element.classList.add('d-none');
         });
+        document.getElementById('mainPage').classList.remove('d-none');
+        showCenteredBlock('Повторите, пожалуйста');
+    });
 
-        document.getElementById('noButton').addEventListener('click', function() {
-            document.querySelectorAll('.container').forEach(function(element) {
-                element.classList.add('d-none');
-            });
-            document.getElementById('mainPage').classList.remove('d-none');
-            //alert('Повторите, пожалуйста.');
-            showCenteredBlock('Повторите, пожалуйста');
-            // Вернуться на основную страницу (реализовать по необходимости)
-        });
+    function showCenteredBlock(text) {
+        const block = document.createElement('div');
+        block.textContent = text;
 
+        block.style.position = 'fixed';
+        block.style.top = '50%';
+        block.style.left = '50%';
+        block.style.transform = 'translate(-50%, -50%)';
+        block.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+        block.style.color = '#fff';
+        block.style.padding = '20px';
+        block.style.borderRadius = '10px';
+        block.style.zIndex = '9999';
+        block.style.textAlign = 'center';
+        block.style.fontFamily = 'Arial, sans-serif';
+        block.style.fontSize = '1.2em';
 
-        function showCenteredBlock(text) {
-            // Создаем элемент блока
-            const block = document.createElement('div');
-            block.textContent = text;
+        document.body.appendChild(block);
 
-            // Стилизуем блок
-            block.style.position = 'fixed';block.style.top = '50%';block.style.left = '50%';block.style.transform = 'translate(-50%, -50%)';block.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';block.style.color = '#fff';block.style.padding = '20px';block.style.borderRadius = '10px'; block.style.zIndex = '9999'; block.style.textAlign = 'center'; block.style.fontFamily = 'Arial, sans-serif';block.style.fontSize = '1.2em';
+        setTimeout(() => {
+            block.remove();
+        }, 4000);
+    }
 
-            // Добавляем блок на страницу
-            document.body.appendChild(block);
+    function setCookie(name, value, days) {
+        const date = new Date();
+        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+        const expires = "expires=" + date.toUTCString();
+        document.cookie = name + "=" + encodeURIComponent(JSON.stringify(value)) + ";" + expires + ";path=/";
+    }
 
-            // Удаляем блок через 4 секунды
-            setTimeout(() => {
-                block.remove();
-            }, 4000);
-        }
-    </script>
-
-    <script>
-        function setCookie(name, value, days) {
-            const date = new Date();
-            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-            const expires = "expires=" + date.toUTCString();
-            document.cookie = name + "=" + encodeURIComponent(JSON.stringify(value)) + ";" + expires + ";path=/";
-        }
-        function getCookie(name) {
-            const nameEQ = name + "=";
-            const ca = document.cookie.split(';');
-            for (let i = 0; i < ca.length; i++) {
-                let c = ca[i];
-                while (c.charAt(0) === ' ') c = c.substring(1, c.length);
-                if (c.indexOf(nameEQ) === 0) {
-                    return JSON.parse(decodeURIComponent(c.substring(nameEQ.length, c.length)));
-                }
+    function getCookie(name) {
+        const nameEQ = name + "=";
+        const ca = document.cookie.split(';');
+        for (let i = 0; i < ca.length; i++) {
+            let c = ca[i];
+            while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+            if (c.indexOf(nameEQ) === 0) {
+                return JSON.parse(decodeURIComponent(c.substring(nameEQ.length, c.length)));
             }
-            return null;
         }
+        return null;
+    }
 
-    </script>
+    let division = getCookie('division');
+    if (division) {
+        document.getElementById('departmentMessage').textContent = 'Подразделение: ' + division.name;
+    }
 
-    <script>
-        let division = getCookie('division');
-        if (division) {
-            document.getElementById('departmentMessage').textContent = 'Подразделение: ' + division.name;
-        }
+</script>
 
-        //setCookie('division', {name: 'asddsa', id: 123}, 30);
-    </script>
-
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
