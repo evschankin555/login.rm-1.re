@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+    <title>Суперадмин</title>
+
+    <link rel="stylesheet" type="text/css" href="static/css/style.css?v=1.96">
+    <link rel="stylesheet" type="text/css" href="static/css/menu.css">
+    <link rel="icon" href="static/images/favicon.png">
+    
+    <!-- <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">-->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+    <script>
+        function closeMenu() {
+            let menu = document.getElementById('menu');
+            let btnOpen = document.getElementById('btnOpen');
+            let btnClose = document.getElementById('btnClose');
+
+            //menu.classList.add('btnInvisible');
+            //btnOpen.classList.remove('btnInvisible');
+            //btnClose.classList.add('btnInvisible');
+
+            let containerMenuOpen = document.getElementById('containerMenuOpen');
+            let containerMain = document.getElementById('containerMain');
+            //menu.classList.remove('btnInvisible');
+            //btnOpen.classList.add('btnInvisible');
+            //btnClose.classList.remove('btnInvisible');
+            containerMain.style.display = 'flex';
+            containerMenuOpen.style.display = 'none';
+        }
+
+        function openMenu() {
+            let menu = document.getElementById('menu');
+            let btnOpen = document.getElementById('btnOpen');
+            let btnClose = document.getElementById('btnClose');
+
+            let containerMenuOpen = document.getElementById('containerMenuOpen');
+            let containerMain = document.getElementById('containerMain');
+            //menu.classList.remove('btnInvisible');
+            //btnOpen.classList.add('btnInvisible');
+            //btnClose.classList.remove('btnInvisible');
+            containerMain.style.display = 'none';
+            containerMenuOpen.style.display = 'flex';
+        }
+    </script>
+</head>
+
+<body>
+    <div class="containerMenuOpen" id="containerMenuOpen">
+        <div class="containerMenu">
+            <button onclick="closeMenu()" type="button" class="menuBtn closeBtn" id="btnClose">
+                <img src="static/images/orange-cross.png" width="40" height="40">Закрыть меню</button>
+
+            <ul class="menu" id="menu">
+                <li>
+                    <a href="/" id="showStartPage"><img src="static/images/orange-arrow.png">Главная</a>
+                </li>
+                <li>
+                    <a href="admin"><img src="static/images/orange-arrow.png">Администрирование</a>
+                </li>
+                <li>
+                    <a href="#"><img src="static/images/orange-arrow.png">Контакты</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div class="container" id="containerMain">
+        <div class="containerMenu">
+            <button onclick="openMenu()" type="button" class="menuBtn openBtn" id="btnOpen">
+                <img src="static/images/three-dots.png" width="40" height="40">Открыть меню</button>
+        </div>
+
+        <div class="containerContent">
+            
+            <div class="contentAdmin" id="authorizationSuperAdmin">
+
+                <form id="loginForm" action="#" class="myform">
+
+                    <h1 class="headerAdmin">Супер админ</h1>
+                    <label class="myform__label">
+                        <span class="myform__icon">
+                            <img src="static/images/user.png">
+                        </span>
+                        <input type="text" id="username" name="username" class="myform__input" placeholder="Логин"
+                            required>
+                    </label>
+                    <label class="myform__label">
+                        <span class="myform__icon">
+                            <img src="static/images/unlock.png">
+                        </span>
+                        <input type="password" id="password" name="password" class="myform__input js-mask"
+                            placeholder="Пароль" required>
+                    </label>
+                    <div class="btnBlockAdmin">
+                        <button type="submit" class="btnCheck btnArrival specialBtn2">
+                            <img src="static/images/white-bracket.png">
+                            <img src="static/images/white-arrow.png">
+                            <p>Войти</p>
+                        </button>
+                    </div>
+
+                </form>
+
+            </div>
+            <ul class="d-none tabs js-tabs" id="tabs">
+                <li><a href="#admin">Администраторы</a></li>
+                <li><a href="#empl" id="employeesButton">Сотрудники</a></li>
+                <li><a href="#log" id="logButton">Логи</a></li>
+                <li><a href="#device" id="bindDepartmentButton">Устройства</a></li>
+            </ul>
+
+            <div class="tabContent">
+                <div class="tabContent__item" id="admin">
+                    <div class="header" id="headerSuperAdmin" style="display: none;">Администратор</div>
+                    <div class="d-none" id="searchAdmin">
+                        <div class="three-btns">
+        
+                            <div class="search-form">
+                                <input id="searchById" type="text" class="myform__input" placeholder="Код сотрудника" required>
+                                <span class="myform__icon">
+                                    <img src="static/images/search.png">
+                                </span>
+                            </div>
+        
+                            <div class="search-form">
+                                <input id="searchByName" type="text" class="myform__input" placeholder="ФИО" required>
+                                <span class="myform__icon">
+                                    <img src="static/images/search.png">
+                                </span>
+                            </div>
+        
+                            <button id="addAdminButton" class="red-btn red-btn--small">
+                                <img src="static/images/add.png">
+                                <p>Добавить Администратора</p>
+                            </button>
+        
+                        </div>
+        
+                        <div class="wrap-table-shadow">
+                            <div class="wrap-table">
+                                <table id="adminList" class="table">
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+        
+                    <div class="d-none" id="newAdmin">
+        
+                        <form id="adminForm" action="#" class="myform myform--grid">
+                            <select class="myform--grid__select" id="adminCode">
+                                <option value="Код сотрудника" disabled selected>Код сотрудника</option>
+                                <!-- Options will be populated via API -->
+                            </select>
+                            <input id="adminName" type="text" placeholder="ФИО" class="myform__style" autocomplete="new-password">
+                            <input id="adminLogin" type="text" placeholder="Логин" class="myform__style" autocomplete="new-password">
+                            <input id="adminPassword" type="password" placeholder="Пароль" class="myform__style"  autocomplete="new-password">
+                            <input id="repeatPassword" type="password" placeholder="Подтвердить Пароль" class="myform__style" autocomplete="new-password">
+        
+                            <div>
+                                <button id="saveAdminButton" type="submit" class="red-btn">
+                                    <img src="static/images/save.png">
+                                    Сохранить
+                                </button>
+                            </div>
+                        </form>
+        
+                    </div>
+                </div>
+                <!-- /.tabContent__item -->
+                <div class="tabContent__item" id="empl">
+                    <div class="containerContent">
+                     
+            
+                        <div class="header" id="headerAdmin">Сотрудники</div>
+            
+            
+                        <div class="contentInfoBlock" id="containerEmployees">
+                            <div style="max-width: 100%; position: relative;">
+                                <select id="employeeSelect" class="select-full employee" onchange='chooseEmployee(this.value)'>
+                                    <!-- <input type="text" class="search-box" placeholder="Выбрать сотрудника"> -->
+                                    <option value="" disabled selected>Выбрать сотрудника</option>
+                                </select>
+                                <img src="static/images/select-arrow.png?0.1.2" class="selectArrow">
+                            </div>
+                            <div style="margin-top: 3%;">
+                                <div class="search-form" style="padding: 1%">
+                                    <input type="text" class="search-box myform__input" placeholder="Поиск по ФИО">
+                                    <span class="myform__icon">
+                                        <img src="static/images/search.png">
+                                    </span>
+                                </div>
+                                <ul class="options ulStyle" id="optionsBlock" style="display: none;">
+                                    <ul class="options" id="optionsUl" style="margin: 0; padding: 0; list-style-type: none">
+                                    </ul>
+                                </ul>
+                            </div>
+                            <div class="searchBlock" id="searchBlock" style="display: none;">
+                                <div class="selected-option">Выбран сотрудник: </div>
+                                <div style="display: flex;">
+                                    <button id="clear-button" class="clearBtn">Очистить</button>
+                                    <button id="btnHide" class="btnHide">&#8249;</button>
+                                </div>
+                            </div>
+                            <div class="employees-grid" id="employees-grid">
+                                <div class="employess-grid__left">
+                                    <div id="photoBlock" class="employees-grid__bigimg">
+                                        <p class="clue" id="clue">Здесь появится Ваша фотография</p>
+                                        <!--<img src="static/images/dist/employee-1.jpg" loading="lazy" width="100%" height="100%" class="employees-grid__bigimg" alt="">-->
+                                        <img id="photo" class="employees-grid__bigimg" alt="Ваше фото появится здесь">
+                                    </div>
+            
+                                    <div class="btnCheckBlock" style="padding: 5% 0 0 0;">
+                                        <button id="takePhotoButton" class="btnCheck btnArrival">
+                                            <img src="static/images/add.png">
+                                            <p>Сделать фото</p>
+                                        </button>
+            
+                                        <button id="bindPhotoButton" class="btnCheck btnLeaving ">
+                                            <img src="static/images/users.png">
+                                            <p>Привязать фото</p>
+                                        </button>
+                                    </div>
+                                </div>
+            
+                                <div class="photos-grid" id="photoList">
+                                    <!-- Блок для отображения фото -->
+                                </div>
+            
+                                <!-- Страница сделать фото -->
+                                <div class="wrapperPhoto d-none" id="cameraContainer">
+                                    <div class="wrapperVideo">
+                                        <video id="video" autoplay></video>
+                                    </div>
+                                    <button id="capturePhotoButton" class="btnCheck btnArrival" style="margin: 30px 0 0 0;">
+                                        <p style="width: 100%; padding: 0; text-align: center;">Сделать фото</p>
+                                    </button>
+                                    <canvas id="canvas" class="d-none"></canvas>
+                                    <!--<img id="photo" alt="Your photo will appear here">-->
+                                </div>
+                            </div>
+                        </div>
+            
+                        <input type="file" id="photoInput" accept="image/*" style="display: none;">
+                    </div>
+                </div>
+                <!-- /.tabContent__item -->
+                <div class="tabContent__item" id="device">
+                    <div class="containerContent">
+                        <div class="contentAdminForms" id="containerDepartmentSelect">
+                            <div class="select-form">
+                                <select id="departmentSelect" class="mobSel">
+                                    <option value="">Выбрать Подразделение</option>
+                                    <!-- Options will be populated via API -->
+                                </select>
+                            </div>
+                        </div>
+                        <div class="grid-two" id="limit_field" style="display: none;">
+                            <div class="limit">
+                                <div class="limit__text">Лимит устройств</div>
+                                <input type="text" id="deviceLimit" class="myform__input" placeholder="1">
+                            </div>
+                            <div class="limit">
+                                <div class="limit__text">Лимит фото</div>
+                                <input type="text" id="photoLimit" class="myform__input" placeholder="5">
+                            </div>
+                            <button id="updateLimitsButton" class="btnCheck btnArrival" style="margin: 30px 0 0 0;">
+                                <p style="width: 100%; padding: 0; text-align: center;">Обновить лимиты</p>
+                            </button>
+                        </div>
+                        <div class="wrap-table-shadow">
+                            <div class="wrap-table">
+                                <table id="deviceList" class="table">
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- /.tabContent__item -->
+                <div class="tabContent__item" id="log">
+                    <div class="containerContent">
+                        <input type="date" id="datePicker" />
+                        <button id="fetchLogsButton">Загрузить данные</button>
+                        <div class="wrap-table-shadow">
+                            <div class="wrap-table">
+                                <table id="logsTable" class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <!--<th>Гид</th>-->
+                                            <th>Имя</th>
+                                            <!--<th>GUID устройства</th>-->
+                                            <!--<th>ID отдела</th>-->
+                                            <th>Вход/Выход</th>
+                                            <th>Ответ</th>
+                                            <th>Дата создания</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Данные будут вставлены сюда с помощью JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- /.tabContent -->
+            
+
+        </div>
+
+        <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+        <script src="static/js/main.js?v=0.3"></script>
+        <script src="static/js/superadmin.js?v=0.3"></script>
+
+        <script>
+
+            update_device();
+            
+            //pages
+            let mainContent = document.getElementById('mainContent');
+            let newAdmin = document.getElementById('newAdmin');
+            let searchAdmin = document.getElementById('searchAdmin');
+            let authorizationSuperAdmin = document.getElementById('authorizationSuperAdmin');
+
+            //buttons
+            let addAdminButton = document.getElementById('addAdminButton');
+            let saveAdminButton = document.getElementById('saveAdminButton');
+
+            //tabs
+            let mytabs = document.getElementById('tabs');
+
+            //forms
+            let loginForm = document.getElementById('loginForm');
+            let adminCode = document.getElementById('adminCode');
+            let adminName = document.getElementById('adminName');
+            let adminLogin = document.getElementById('adminLogin');
+            let adminPassword = document.getElementById('adminPassword');
+            let repeatPassword = document.getElementById('repeatPassword');
+
+            //inputs
+            let searchById = document.getElementById('searchById');
+            let searchByName = document.getElementById('searchByName');
+
+            let headerSuperAdmin = document.getElementById('headerSuperAdmin');
+            var hash_admin = null;
+
+            document.addEventListener('DOMContentLoaded', function () {
+                $('#loginModal').modal('show');
+
+                document.querySelector('.js-tabs li:first-child').classList.add('is-active');
+                document.querySelector('.tabContent__item').style.display = 'block';
+
+                
+                document.querySelectorAll('.js-tabs a').forEach(function(tabLink) {
+                    tabLink.addEventListener('click', function(e) {
+                        e.preventDefault(); 
+
+                        document.querySelectorAll('.js-tabs li').forEach(function(tab) {
+                            tab.classList.remove('is-active');
+                        });
+
+                        this.parentElement.classList.add('is-active');
+
+                        document.querySelectorAll('.tabContent__item').forEach(function(content) {
+                            content.style.display = 'none';
+                        });
+
+                        let tab = document.querySelector(this.getAttribute('href'));
+                        tab.style.display = 'block';
+                        tab.style.opacity = 0; 
+
+                        let opacity = 0;
+                        let fadeIn = setInterval(function() {
+                            opacity += 0.05;
+                            tab.style.opacity = opacity;
+                            if (opacity >= 1) clearInterval(fadeIn); // Останавливаем, когда достигаем полной непрозрачности
+                        }, 20);
+                    });
+                });
+
+
+                function clearForms(){
+                    document.getElementById('adminName').value = '';
+                    document.getElementById('adminLogin').value = ''; 
+                    document.getElementById('adminPassword').value = ''; 
+                    document.getElementById('repeatPassword').value = ''; 
+                }
+
+                loginForm.addEventListener('submit', function (event) {
+                    event.preventDefault();
+                    const form = event.target;
+                    const formData = new FormData(form);
+                    const data = {};
+
+                    formData.forEach((value, key) => {
+                        data[key] = value;
+                    });
+                    data['device_id'] = device_id;
+
+                    fetch('/superlogin', {
+                        method: 'POST',
+                        body: JSON.stringify(data),
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                authorizationSuperAdmin.style.display = 'none';
+                                headerSuperAdmin.style.display = 'block';
+                                searchAdmin.classList.remove("d-none");
+                                mytabs.classList.remove('d-none');
+                                $('#loginModal').modal('hide');
+                                hash_admin = data.hash;
+                                loadAdmins();
+                            } else {
+                                if (data.error) {
+                                    showCenteredBlock(data.error);
+                                }
+                                else {
+                                    showCenteredBlock('Повторите попытку');
+                                }
+                            }
+                        })
+                        .catch(error => {
+                            showCenteredBlock('Повторите попытку');
+                        });
+                });
+
+                addAdminButton.addEventListener('click', function () {
+                    searchAdmin.classList.add("d-none");
+                    newAdmin.classList.remove("d-none");
+                    loadAdminCodes();
+                });
+
+                saveAdminButton.addEventListener('click', function () {
+
+                    const adminData = {
+                        code: adminCode.options[adminCode.selectedIndex].attributes['data-empl-code'].value,
+                        name: adminName.value,
+                        login: adminLogin.value,
+                        password: adminPassword.value,
+                        repeatPassword: repeatPassword.value,
+                        hash: hash_admin
+                    };
+
+                    if (adminData.password !== adminData.repeatPassword) {
+                        showCenteredBlock('Пароли не совпадают');
+                        return;
+                    }
+
+                    fetch('/add_admin', {
+                        method: 'POST',
+                        body: JSON.stringify(adminData),
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                loadAdmins();
+                                searchAdmin.classList.remove("d-none");
+                                newAdmin.classList.add("d-none");
+                                showCenteredBlock('Администратор добавлен');
+                                clearForms();
+
+                            } else {
+                                if (data.error) {
+                                    showCenteredBlock(data.error);
+                                    clearForms();
+                                }
+                                else {
+                                    showCenteredBlock('Ошибка добавления администратора');
+                                    clearForms();
+                                }
+                            }
+                        })
+                        .catch(error => {
+                            showCenteredBlock('Ошибка добавления администратора');
+                        });
+                });
+
+                searchById.addEventListener('input', function () {
+                    loadAdmins();
+                });
+
+                searchByName.addEventListener('input', function () {
+                    loadAdmins();
+                });
+
+                //document.querySelectorAll('.menuBtn').forEach(function (element) {
+                //    element.addEventListener('click', function () {
+                //        document.getElementById('adminForm').style.display = 'none';
+                //        document.getElementById('mainContent').style.display = 'block';
+                //    });
+                //});
+
+                /*$('#adminCode').on('select2:select', function (e) {
+                    //document.getElementById('takePhotoButton').disabled = false;
+                    var selectedOption = e.params.data.element;
+                    var select_user_id = $(selectedOption).data('empl-code');
+                    // Send request to load photos for selected employee
+                    //loadEmployeePhotos(this.value);  // Pass the selected employee ID
+                    fetch('/get_users_sa', {
+                        method: 'POST',
+                        body: JSON.stringify({ hash: hash_admin, user_id: select_user_id }),
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            document.getElementById('adminName').value = data.users[0].empl_name;
+                        })
+                        .catch(error => {
+                            showCenteredBlock('Ошибка загрузки администраторов');
+                        });
+                });*/
+
+                document.getElementById('employeesButton').addEventListener('click', function () {
+                //document.getElementById('mainContent').style.display = 'none';
+                //document.getElementById('departmentSection').style.display = 'none';
+                //document.getElementById('employeesSection').style.display = 'block';
+                    loadEmployees();
+                    
+                    //headerAdmin.textContent = 'Сотрудники';
+                });
+
+                function loadEmployees() {
+                    //showLoadingOverlay();
+
+                    // Mock data
+                    var employees = [
+                        { id: 1, name: 'Сотрудник 1' },
+                        { id: 2, name: 'Сотрудник 2' },
+                        { id: 3, name: 'Сотрудник 3' }
+                    ];
+
+                    fetch('/get_users', {
+                        method: 'POST',
+                        body: JSON.stringify({ hash: hash_admin }),
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                employees = data.users;
+                                var employeeSelect = document.getElementById('employeeSelect');
+                                var optionsUl = document.getElementById('optionsUl');
+                                employeeSelect.innerHTML = '<option>Выбрать сотрудника</option>'; // Clear existing options and add placeholder
+                                var employee_index = 1;
+                                employees.forEach(function (employee) {
+                                    var option = document.createElement('option');
+                                    var li = document.createElement('li');
+
+                                    option.value = employee_index;
+                                    option.setAttribute('data-empl-code', employee.empl_code);
+                                    option.text = '(' + employee.empl_code + ') ' + employee.empl_name;
+
+                                    li.textContent = employee.empl_name;
+                                    li.value = employee_index;
+                                    li.classList.add('liStyle');
+                                    optionsUl.appendChild(li);
+                                    li.addEventListener('click', (event) => {
+                                        chooseEmployee(event.currentTarget.value);
+                                        selectedOption.textContent = "Cотрудник: " + event.currentTarget.textContent;
+
+                                        document.getElementById('employeeSelect').getElementsByTagName('option')[event.currentTarget.value].selected = 'selected';
+
+                                        searchBox.value = '';
+
+                                        optionsBlock.style.display = 'none';
+                                        searchBlock.style.display = 'none';
+                                    });
+                                    employeeSelect.appendChild(option);
+                                    option.addEventListener('submit', function () {
+                                        console.log("option")
+                                        console.log(option)
+                                        //select_user_id = $(selectedOption).data('empl-code');
+                                    });
+                                    employee_index += 1;
+                                });
+                            } else {
+                                console.error('Request failed with status:', response.status);
+                                showCenteredBlock('Повторите попытку');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Fetch error:', error);
+                            showCenteredBlock('Повторите попытку');
+                        })
+                        .finally(() => { /*hideLoadingOverlay()*/ });
+
+                    // Initialize Select2 on the employee select
+                    //{
+                    //    //placeholder: 'Выберите сотрудника',
+                    //    allowClear: true
+                    //}
+                    //$('#employeeSelect').select2();
+                }
+
+                function loadAdmins() {
+                    const searchByIdValue = searchById.value;
+                    const searchByNameValue = searchByName.value;
+                    fetch(`/get_admins`, {
+                        method: 'POST',
+                        body: JSON.stringify({ hash: hash_admin, id_filter: searchByIdValue, name_filter: searchByNameValue }),
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            const adminList = document.getElementById('adminList');
+                            adminList.innerHTML = '';
+                            let headerTable = document.createElement('tr');
+                            headerTable.innerHTML = `                                
+                                <th>Код сотрудника</th>
+                                <th>ФИО</th>
+                                <th>Логин</th>
+                                <th>Удалить</th>
+                            `;
+                            adminList.appendChild(headerTable);
+                            data.admins.forEach(admin => {
+                                const adminDiv = document.createElement('tr');
+                                adminDiv.innerHTML = `
+                                    <td>${admin.id}</td>
+                                    <td>${admin.name}</td>
+                                    <td>${admin.login}</td>
+                                    <td><button data-admin-id="${admin.id}" class="remove-icon deleteAdminButton"><img src="static/images/trash-red.png"></button></td>
+                                `;
+
+                                adminList.appendChild(adminDiv);
+                            });
+                            setDeleteAdminListeners();
+                        })
+                        .catch(error => {
+                            showCenteredBlock('Ошибка загрузки администраторов');
+                        });
+                }
+
+
+                function loadAdminCodes() {
+                    fetch('/get_users_sa', {
+                        method: 'POST',
+                        body: JSON.stringify({ hash: hash_admin }),
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            const adminCodeSelect = document.getElementById('adminCode');
+                            /*
+                            adminCodeSelect.innerHTML = '';
+                            data.codes.forEach(code => {
+                                const option = document.createElement('option');
+                                option.value = code.id;
+                                option.textContent = code.name;
+                                adminCodeSelect.appendChild(option);
+                            });
+            
+                            $('#adminCode').on('change', function() {
+                                const selectedOption = this.options[this.selectedIndex];
+                                document.getElementById('adminName').value = selectedOption.text;
+                            });
+                            */
+
+                            adminCodeSelect.innerHTML = '<option>Код сотрудника</option>'; // Clear existing options and add placeholder
+                            var option_index = 1;
+                            //let option_index = `${adminCode.value}`;//add
+
+
+                            data.users.forEach(function (employee) {
+                                var option = document.createElement('option');
+                                option.value = option_index;
+                                //option.value = adminData.code;
+                                option.setAttribute('data-empl-code', employee.empl_code);
+                                option.text = '(' + employee.empl_code + ') ' + employee.empl_name;
+                                adminCodeSelect.appendChild(option);
+
+                                option_index += 1;
+                                //option_index = '';
+                            });
+
+                            // Initialize Select2 on the employee select
+                            /* $('#adminCode').select2({
+                                 placeholder: 'Выберите сотрудника',
+                                 allowClear: true
+                             });*/
+                        })
+                        .catch(error => {
+                            showCenteredBlock('Ошибка загрузки кодов');
+                        });
+                }
+
+                function searchAdmins() {
+                    const searchByIdValue = searchById.value;
+                    const searchByNameValue = searchByName.value;
+                    fetch(`/get_admins`, {
+                        method: 'POST',
+                        body: JSON.stringify({ hash: hash_admin, id_filter: searchByIdValue, name_filter: searchByNameValue }),
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            const adminList = document.getElementById('adminList');
+                            adminList.innerHTML = '';
+                            data.admins.forEach(admin => {
+                                const adminDiv = document.createElement('tr');
+                                adminDiv.innerHTML = `
+                                    <td>${admin.id}</td>
+                                    <td>${admin.name}</td>
+                                    <td>${admin.login}</td>
+                                    <td><button data-admin-id="${admin.id}" class="remove-icon deleteAdminButton"><img src="static/images/trash-red.png"></button></td>
+                                `;
+                                adminList.appendChild(adminDiv);
+                            });
+                            setDeleteAdminListeners();
+                        })
+                        .catch(error => {
+                            showCenteredBlock('Ошибка поиска администраторов');
+                        });
+                }
+
+                function setDeleteAdminListeners() {
+                    const deleteAdminButtons = document.querySelectorAll('.deleteAdminButton');
+                    deleteAdminButtons.forEach(button => {
+                        button.addEventListener('click', function () {
+                            const adminId = this.getAttribute('data-admin-id');
+                            deleteAdmin(adminId);
+                            showCenteredBlock('Администратор удален');
+                        });
+                    });
+                }
+
+                function deleteAdmin(adminId) {
+                    fetch(`/delete_admin/${adminId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${hash_admin}`
+                        }
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                loadAdmins();
+                            } else {
+                                showCenteredBlock('Ошибка удаления администратора');
+                            }
+                        })
+                        .catch(error => {
+                            showCenteredBlock('Ошибка удаления администратора');
+                        });
+                }
+
+                // start
+                
+                bindDepartmentButton.addEventListener('click', function () {
+                    loadDepartments();
+                });
+                
+                // loadDepartments();
+                function loadDepartments() {
+                // Mock data
+                    //showLoadingOverlay();
+
+                    var departments = [
+                        { id: 1, name: 'Отдел 1' },
+                        { id: 2, name: 'Отдел 2' },
+                        { id: 3, name: 'Отдел 3' }
+                    ];
+
+                    fetch('/get_departments', {
+                        method: 'POST',
+                        body: JSON.stringify({ hash: hash_admin }),
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                departments = data.departments;
+                                var departmentSelect = document.getElementById('departmentSelect');
+                                departmentSelect.innerHTML = '<option>Выбрать Подразделение</option>'; // Clear existing options and add placeholder
+                                
+                                // чтобы можно было выбрать пустоту и тогда департамент сбросится 
+                                var option = document.createElement('option');
+                                option.value = 0;
+                                option.setAttribute('data-department-guid', '');
+                                option.text = '';
+                                departmentSelect.appendChild(option);
+
+                                var department_index = 2;
+                                departments.forEach(function (department) {
+                                    var option = document.createElement('option');
+                                    option.value = department_index;
+                                    option.setAttribute('data-department-guid', department.unit_guid);
+                                    option.text = '(' + department.unit_code + ') ' + department.unit_name;
+                                    departmentSelect.appendChild(option);
+
+                                    department_index += 1;
+                                });
+                            } else {
+                                console.error('Request failed with status:', response.status);
+                                showCenteredBlock('Повторите попытку');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Fetch error:', error);
+                            showCenteredBlock('Повторите попытку');
+                        })
+                        .finally(() => { /*hideLoadingOverlay()*/ });
+
+                }
+
+                // end
+
+            });
+            
+
+            function load_department_data() {
+                fetch(`/get_department_data`, {
+                        method: 'POST',
+                        body: JSON.stringify({ hash: hash_admin, device_id: device_id, department: '!!!!!!!' }),
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        // Получение элемента таблицы
+                        const adminList = document.getElementById('adminList');
+                        adminList.innerHTML = ''; // Очистка предыдущего содержимого
+
+                        // Создание заголовка таблицы
+                        let headerTable = document.createElement('tr');
+                        headerTable.innerHTML = `
+                            <th>Код сотрудника</th>
+                            <th>ФИО</th>
+                            <th>Логин</th>
+                            <th>Дата создания</th>
+                            <th>Последнее изменение</th>
+                        `;
+                        adminList.appendChild(headerTable);
+
+                        // Перебор списка администраторов и создание строк таблицы
+                        data.devises.forEach((device, index) => {
+                            const admin = device.admin;
+                            const adminRow = document.createElement('tr');
+                            adminRow.innerHTML = `
+                                <td>${admin.id}</td>
+                                <td>${admin.name}</td>
+                                <td>${admin.login}</td>
+                                <td>${admin.created_at || 'Не указано'}</td>
+                                <td>${device.modify_at}</td>
+                            `;
+                            adminList.appendChild(adminRow);
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Ошибка загрузки администраторов:', error);
+                        alert('Ошибка загрузки данных администраторов');
+                    });
+            }
+
+            
+            function chooseEmployee(optionIndex) {
+                console.log('chooseEmployee')
+                console.log(optionIndex)
+                document.getElementById('employees-grid').style.display = 'grid';
+                if (optionIndex != null) {
+                    var option = document.getElementById("employeeSelect").options[optionIndex];
+                    if (option != null) {
+                        photo.style.display = 'none';
+                        select_user_id = option.getAttribute('data-empl-code');
+                        loadEmployeePhotos(select_user_id);
+                    }
+                }
+            }
+
+            function loadEmployeePhotos(userId) {
+                // Mock data for photos (replace with actual API call)
+                var photos = [
+                    { id: 1, url: 'images/1.jpeg' },
+                    { id: 2, url: 'images/1.jpeg' }
+                ];
+                console.log(userId);
+                fetch('/get_users', {
+                    method: 'POST',
+                    body: JSON.stringify({ hash: hash_admin, user_id: userId }),
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            photos = data.users[0].images;
+                            console.log(photos);
+
+                            var photoList = document.getElementById('photoList');
+                            photoList.innerHTML = ''; // Clear existing photos
+
+                            if (photos.length > 0) {
+                                photos.forEach(function (photo) {
+                                    //<button class="photos-grid__item:after" data-photo-id="' + photo.id + '"></button>
+
+                                    //var photoHTML = '<div class="photos-grid__item" onclick="deletePhoto(this)">  <img class="photos-grid__item::after" src="' + photo.url + '"></div>';
+                                    var photoHTML = '<div class="photos-grid__item" onclick="modalDelete(this)">  <img class="photos-grid__item::after" src="' + photo.url + '"></div>';
+                                    photoList.insertAdjacentHTML('beforeend', photoHTML);
+                                });
+                            };
+
+                            // Ensure "Take Photo" button is enabled after loading photos
+                            document.getElementById('takePhotoButton').disabled = false;
+                        } else {
+                            console.error('Request failed with status:', response.status);
+                            showCenteredBlock('Повторите попытку');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Fetch error:', error);
+                        showCenteredBlock('Повторите попытку');
+                    });
+            }
+            
+        </script>
+
+</body>
+
+</html>

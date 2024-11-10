@@ -1,238 +1,460 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     <title>Основная страница</title>
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        #video {
-            width: 100%;
-            max-width: 600px;
-            height: auto;
-            margin-bottom: 10px;
+
+    <!--<link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">-->
+    <link rel="stylesheet" type="text/css" href="static/css/style.css">
+    <link rel="stylesheet" type="text/css" href="static/css/menu.css">
+    <link rel="icon" href="static/images/favicon.png">
+
+    <script>
+        function closeMenu() {
+            let menu = document.getElementById('menu');
+            let btnOpen = document.getElementById('btnOpen');
+            let btnClose = document.getElementById('btnClose');
+
+            //menu.classList.add('btnInvisible');
+            //btnOpen.classList.remove('btnInvisible');
+            //btnClose.classList.add('btnInvisible');
+
+            let containerMenuOpen = document.getElementById('containerMenuOpen');
+            let containerMain = document.getElementById('containerMain');
+            //menu.classList.remove('btnInvisible');
+            //btnOpen.classList.add('btnInvisible');
+            //btnClose.classList.remove('btnInvisible');
+            containerMain.style.display = 'flex';
+            containerMenuOpen.style.display = 'none';
         }
-        #photo {
-            display: none;
-            width: 100%;
-            max-width: 600px;
-            height: auto;
-            margin-top: 10px;
+
+        function openMenu() {
+            let menu = document.getElementById('menu');
+            let btnOpen = document.getElementById('btnOpen');
+            let btnClose = document.getElementById('btnClose');
+
+            let containerMenuOpen = document.getElementById('containerMenuOpen');
+            let containerMain = document.getElementById('containerMain');
+            //menu.classList.remove('btnInvisible');
+            //btnOpen.classList.add('btnInvisible');
+            //btnClose.classList.remove('btnInvisible');
+            containerMain.style.display = 'none';
+            containerMenuOpen.style.display = 'flex';
         }
-        @media (max-width: 768px) {
-            .btn {
-                width: 100%;
-                margin-bottom: 10px;
-            }
-        }
-    </style>
+    </script>
 </head>
+
 <body>
-<!-- Основная страница -->
-<div id="mainPage" class="container mt-5">
-    <div class="row mb-3">
-        <div class="col-12 text-center">
-            <h5 id="departmentMessage">Подразделение не выбрано</h5>
+    <div class="containerMenuOpen" id="containerMenuOpen">
+        <div class="containerMenu">
+            <button onclick="closeMenu()" type="button" class="menuBtn closeBtn" id="btnClose">
+                <img src="static/images/orange-cross.png" width="40" height="40">Закрыть меню</button>
+
+            <ul class="menu" id="menu">
+                <li>
+                    <a href="/" id="showStartPage"><img src="static/images/orange-arrow.png">Главная</a>
+                </li>
+                <li>
+                    <a href="admin"><img src="static/images/orange-arrow.png">Администрирование</a>
+                </li>
+                <li>
+                    <a href="#"><img src="static/images/orange-arrow.png">Контакты</a>
+                </li>
+            </ul>
         </div>
     </div>
-    <div class="row mb-3">
-        <div class="col-3">
-            <div class="dropdown">
-                <button class="btn btn-primary dropdown-toggle" type="button" id="menuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    Меню
-                </button>
-                <div class="dropdown-menu" aria-labelledby="menuButton">
-                    <a class="dropdown-item active" href="#">Пропуск</a>
-                    <a class="dropdown-item" href="admin">Администрирование</a>
+
+    <div class="container" id="containerMain">
+        <div class="containerMenu">
+            <button onclick="openMenu()" type="button" class="menuBtn openBtn" id="btnOpen">
+                <img src="static/images/three-dots.png" width="40" height="40">Открыть меню</button>
+        </div>
+        <div id="nameHeader" class="header">Штатное расписание</div>
+
+
+        <div id="mainPage" class="containerContent">
+            <!-- Основная страница -->
+            <div class="two-grid" id="startPage">
+                <div class="two-grid__item">
+                    <div class="gray-circle"><a href="admin"><img src="static/images/icon-plus.png" width="64"
+                                height="64" alt=""></a></div>
+                    <p class="two-grid__descript">
+                        Для работы с приложением<br>необходимо привязать Подразделение
+                    </p>
+
+                </div>
+                <div class="two-grid__item">
+                    <div class="gray-circle"><a href="admin"><img src="static/images/three-dots.png"></a></div>
+                    <p class="two-grid__descript"> Сделать это можно через меню <br>Администрирование</p>
                 </div>
             </div>
-        </div>
-        <div class="col-6 text-center">
-            <button id="uploadFileButtonCome" class="btn btn-secondary">Сделать фото</button>
-        </div>
-        <div class="col-3 text-center">
-            <button id="uploadFileButtonWent" class="btn btn-secondary">Сделать фото Уход</button>
-        </div>
-    </div>
-    <div class="row mb-3 d-none" id="cameraContainer">
-        <div class="col-12 text-center">
-            <video id="video" autoplay></video>
-            <button id="takePhotoButton" class="btn btn-primary mt-3">Сделать фото</button>
-            <canvas id="canvas" class="d-none"></canvas>
-            <div class="text-center">
-                <img id="photo" alt="Your photo will appear here">
+
+            <!-- Страница пришел/ушел -->
+            <div id="recognitionPage" class="contentInfoBlock d-none">
+                <div class="blockInfo">
+                    <div class="gray-circle">
+                        <img src="static/images/green-check-icon.png" width="64" height="64" alt="">
+                    </div>
+                    <p>Ваше подразделение:</p>
+                    <p id="departmentMessage"></p>
+                </div>
+                <div class="btnCheckBlock">
+
+                    <button id="uploadFileButtonCome" class="btnCheck btnArrival">
+                        <img src="static/images/white-bracket.png">
+                        <img src="static/images/white-arrow.png">
+                        <p>Приход на работу</p>
+                    </button>
+
+                    <button id="uploadFileButtonWent" class="btnCheck btnLeaving">
+                        <img src="static/images/white-bracket.png">
+                        <img src="static/images/white-arrow.png" style="transform: rotate(180deg)">
+                        <p>Уход с работы</p>
+                    </button>
+
+                </div>
+            </div>
+
+            <!-- Подтверждение -->
+            <div id="responsePage" class="contentInfoBlock d-none">
+                <div class="blockInfo">
+                    <div class="gray-circle">
+                        <img src="static/images/user-check.png" width="64" height="64" alt="">
+                    </div>
+                    <p id="questionName"></p>
+                </div>
+                <p>Это действительно вы?</p>
+
+                <div class="btnCheckBlock">
+
+                    <button id="yesButton" class="btnCheck btnArrival">
+                        <img src="static/images/check-mark.png">
+                        <p>Да, это я</p>
+                    </button>
+
+                    <button id="noButton" class="btnCheck btnLeaving">
+                        <img src="static/images/white-cross.png">
+                        <p>Нет, это не я</p>
+                    </button>
+
+                </div>
+            </div>
+
+            <!-- Ответ на распознование -->
+            <div id="responseToRecognition" class="contentInfoBlock d-none">
+                <!-- Положительный ответ на распознование -->
+                <div id="responseToRecognitionPositive" class="blockInfo">
+                    <div class="gray-circle">
+                        <img src="static/images/green-check-icon.png" width="64" height="64" alt="">
+                    </div>
+                    <p id="adminName"></p>
+                    <p>Мы зарегистрировали Вас.</p>
+                    <p>Спасибо.</p>
+                </div>
+                <!-- Отрицательный ответ на распознование -->
+                <div id="responseToRecognitionNegative" class="blockInfo">
+                    <div class="gray-circle">
+                        <img src="static/images/orange-cross.png" width="64" height="64" alt="">
+                    </div>
+                    <p>
+                        Извините, нам не удалось распознать Вас.
+                    </p>
+                    <p>
+                        Необходимо пройти процедуру повторно.
+                    </p>
+
+                    <div class="btnCheckBlock">
+                        <button id="goThroughAgain" class="btnCheck btnArrival">
+                            <img src="static/images/white-cross.png">
+                            <p>Пройти повторно</p>
+                        </button>
+                    </div>
+                </div>
+
             </div>
         </div>
-    </div>
-</div>
 
-<!-- Страница после отправки фото -->
-<div id="responsePage" class="container mt-5 d-none">
-    <div class="row mb-3">
-        <div class="col-12 text-center">
-            <h5 id="question">Вы такой-то?</h5>
+        <!-- Страница сделать фото -->
+        <div class="wrapperPhoto d-none" id="cameraContainer">
+            <div class="wrapperVideo">
+                <video id="video" autoplay></video>
+            </div>
+            <button id="takePhotoButton" class="btnCheck btnArrival" style="margin: 30px 0 0 0;">
+                <p style="width: 100%; padding: 0; text-align: center;">Сделать фото</p>
+            </button>
+            <canvas id="canvas" class="d-none"></canvas>
+            <!--<div class="text-center">
+                <img id="photo" alt="Your photo will appear here">
+            </div>-->
         </div>
-    </div>
-    <div class="row">
-        <div class="col-6 text-right">
-            <button id="yesButton" class="btn btn-success">Да</button>
+
+        <!-- Блок ожидания -->
+        <div id="loadingOverlay" class="loadingOverlay">
+            <div class="containerLoading" role="status">
+                <span class="loader"></span>
+                <span class="pLoading">Loading...</span>
+            </div>
         </div>
-        <div class="col-6 text-left">
-            <button id="noButton" class="btn btn-danger">Нет</button>
-        </div>
-    </div>
-</div>
 
-<!-- Скрипты -->
-<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-<script>
-    let came_or_went = '';
-    var select_user;
-    var current_time_user;
-    var video = document.getElementById('video');
-    var canvas = document.getElementById('canvas');
-    var photo = document.getElementById('photo');
-    var cameraContainer = document.getElementById('cameraContainer');
 
-    document.getElementById('uploadFileButtonCome').addEventListener('click', function() {
-        startCamera();
-        came_or_went = 'came';
-    });
+        <!-- Скрипты -->
+        <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+        <script src="static/js/main.js?v=0.3"></script>
+        <script>
+            update_device();
 
-    document.getElementById('uploadFileButtonWent').addEventListener('click', function() {
-        startCamera();
-        came_or_went = 'went';
-    });
+            let came_or_went = '';
+            var select_user;
+            var current_time_user;
+            var video = document.getElementById('video');
+            var canvas = document.getElementById('canvas');
+            var photo = document.getElementById('photo');
 
-    document.getElementById('takePhotoButton').addEventListener('click', function() {
-        takePhoto();
-    });
+            //pages
+            let mainPage = document.getElementById('mainPage');
+            let startPage = document.getElementById('startPage');
+            let makePhotoPage = document.getElementById('makePhotoPage');
+            let recognitionPage = document.getElementById('recognitionPage');
+            let responsePage = document.getElementById('responsePage');
+            let responseToRecognition = document.getElementById('responseToRecognition');
+            let cameraContainer = document.getElementById('cameraContainer');
+            let loadingOverlay = document.getElementById('loadingOverlay');
+            let showStartPage = document.getElementById('showStartPage');
 
-    function startCamera() {
-        cameraContainer.classList.remove('d-none');
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then(stream => {
-                video.srcObject = stream;
-            })
-            .catch(error => console.error('Error accessing media devices.', error));
-    }
+            //buttons
+            let uploadFileButtonCome = document.getElementById('uploadFileButtonCome');
+            let uploadFileButtonWent = document.getElementById('uploadFileButtonWent');
+            let takePhotoButton = document.getElementById('takePhotoButton');
+            let goThroughAgainButton = document.getElementById('goThroughAgain');
 
-    function takePhoto() {
-        const context = canvas.getContext('2d');
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const imageDataURL = canvas.toDataURL('image/png');
-        photo.setAttribute('src', imageDataURL);
-        photo.style.display = 'block';
-        uploadPhoto(imageDataURL);
-    }
+            //containers
+            let departmentMessage = document.getElementById('departmentMessage');
+            //let adminName = document.getElementById('adminName');
+            let questionName = document.getElementById('questionName');
 
-    function uploadPhoto(imageDataURL) {
-        fetch(imageDataURL)
-            .then(res => res.blob())
-            .then(blob => {
-                const formData = new FormData();
-                formData.append('photo', blob, 'photo.png');
+            let nameAdmin = '';
 
-                fetch('/uploadphoto/', {
+            document.getElementById('responseToRecognitionPositive').style.display = 'none';
+            document.getElementById('responseToRecognitionNegative').style.display = 'none';
+
+            function showCenteredBlock(message) {
+                    const centeredBlock = document.createElement('div');
+                    centeredBlock.classList.add('showCenteredBlock');
+                    centeredBlock.innerHTML = `
+                        <p>${message}</p>
+                        <button class="btn btn-secondary" id="centeredBlockCloseButton">Закрыть</button>
+                    `;
+                    document.body.appendChild(centeredBlock);
+
+                    document.getElementById('centeredBlockCloseButton').addEventListener('click', function () {
+                        document.body.removeChild(centeredBlock);
+                    });
+                }
+
+                function showCenteredBlock(text) {
+
+                    const block = document.createElement('div');
+                    block.textContent = text;
+                    block.classList.add('messBlock');
+
+                    document.body.appendChild(block);
+                    setTimeout(() => {
+                        block.remove();
+                    }, 4000);
+                }
+
+
+            //startPage
+            function showStartPageFun() {
+                startPage.style.display = 'grid';
+            }
+
+            function hideStartPage() {
+                startPage.style.display = 'none';
+            }
+
+            showStartPage.addEventListener('click', function () {
+                showStartPageFun();
+            });
+
+            goThroughAgainButton.addEventListener('click', function () {
+                hideStartPage();
+                responsePage.classList.add('d-none');
+            });
+
+            //LoadingOverlay
+            function showLoadingOverlay() {
+                loadingOverlay.style.display = 'flex';
+            }
+
+            function hideLoadingOverlay() {
+                loadingOverlay.style.display = 'none';
+            }
+
+            //Photo block
+            uploadFileButtonCome.addEventListener('click', function () {
+                startCamera();
+                came_or_went = 'came';
+            });
+
+            uploadFileButtonWent.addEventListener('click', function () {
+                startCamera();
+                came_or_went = 'went';
+            });
+
+            takePhotoButton.addEventListener('click', function () {
+                takePhoto();
+            });
+
+            function startCamera() {
+                document.getElementById('cameraContainer').classList.remove('d-none');
+                navigator.mediaDevices.getUserMedia({ video: true })
+                    .then(stream => {
+                        video.srcObject = stream;
+                    })
+                    .catch(error => console.error('Error accessing media devices.', error));
+            }
+
+            function takePhoto() {
+                showLoadingOverlay();
+                const context = canvas.getContext('2d');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const imageDataURL = canvas.toDataURL('image/png');
+
+                const stream = video.srcObject;
+                const tracks = stream.getTracks();
+                tracks.forEach((track) => {
+                    track.stop();
+                });
+                video.srcObject = null;
+             
+                //photo.setAttribute('src', imageDataURL);
+                //photo.style.display = 'block';
+                uploadPhoto(imageDataURL);
+            }
+
+            function uploadPhoto(imageDataURL) {
+                showLoadingOverlay();
+                nameHeader.textContent='Распознавание';
+                document.getElementById('cameraContainer').classList.add('d-none');
+                document.getElementById('recognitionPage').classList.add('d-none');
+                fetch(imageDataURL)
+                    .then(res => res.blob())
+                    .then(blob => {
+                        const formData = new FormData();
+                        formData.append('photo', blob, 'photo.png');
+
+                        fetch('/uploadphoto/', {
+                            method: 'POST',
+                            body: formData
+                        })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    if (!data.user) {
+                                        //responsePage.classList.remove('d-none');
+                                        responseToRecognition.classList.remove('d-none');
+                                        document.getElementById('responseToRecognitionNegative').style.display = 'flex';
+                                        hideLoadingOverlay();
+                                        return;
+                                    }
+                                    responsePage.classList.remove('d-none');
+                                    questionName.textContent = `Система распознала Вас, как ${data.user.name}.`;
+                                    nameAdmin = data.user.name;
+                                    select_user = data.user.code;
+                                    current_time_user = data.info.current_time;
+                                }
+                            })
+                            .catch(error => console.error('Error:', error))
+                            .finally(() => { hideLoadingOverlay() });
+                    });
+            }
+
+            goThroughAgainButton.addEventListener('click', function () {
+                responseToRecognition.classList.add('d-none');
+                document.getElementById('responseToRecognitionNegative').style.display = 'none';
+                recognitionPage.classList.remove('d-none');
+                nameHeader.textContent='Распознавание';
+            });
+
+            document.getElementById('yesButton').addEventListener('click', function () {
+                showLoadingOverlay();
+                responsePage.classList.add('d-none');
+                responseToRecognition.classList.remove('d-none');
+                fetch('/confirm', {
                     method: 'POST',
-                    body: formData
+                    body: JSON.stringify({ confirmed: true, came_or_went: came_or_went, device_id: device_id, user_code: select_user, current_time_user: current_time_user }),
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
                 })
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
-                            document.querySelector('.container').classList.add('d-none');
-                            document.getElementById('responsePage').classList.remove('d-none');
-                            document.getElementById('question').textContent = `Вы ${data.user.name}?`;
-                            select_user = data.user.code;
-                            current_time_user = data.info.current_time;
+                            //document.querySelectorAll('.container').forEach(function (element) {
+                            //    element.classList.add('d-none');
+                            //});
+                            //document.getElementById('adminName').textContent = `${data.user.name},`;
+                            document.getElementById('adminName').textContent = nameAdmin;
+                            document.getElementById('cameraContainer').classList.add('d-none');
+                            document.getElementById('responseToRecognitionPositive').style.display = 'flex';
+                            setTimeout(() => {
+                                document.getElementById('responseToRecognition').classList.add('d-none');
+                                document.getElementById('responseToRecognitionPositive').style.display = 'none';
+                                recognitionPage.classList.remove('d-none');
+                                nameHeader.textContent='Штатное расписание';
+                                window.location.href = '/';
+                                nameAdmin = '';
+                            }, 3000);
                         }
                     })
-                    .catch(error => console.error('Error:', error));
+                    .catch(error => console.error('Error:', error))
+                    .finally(() => { hideLoadingOverlay() });
             });
-    }
 
-    document.getElementById('yesButton').addEventListener('click', function() {
-        fetch('/confirm', {
-            method: 'POST',
-            body: JSON.stringify({ confirmed: true, came_or_went: came_or_went, department_guid: division.department_guid, user_code: select_user, current_time_user: current_time_user}),
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    document.querySelectorAll('.container').forEach(function(element) {
-                        element.classList.add('d-none');
-                    });
-                    document.getElementById('mainPage').classList.remove('d-none');
-                    showCenteredBlock('Добро пожаловать!');
+            document.getElementById('noButton').addEventListener('click', function () {
+                /*document.querySelectorAll('.container').forEach(function (element) {
+                    element.classList.add('d-none');
+                });*/
+                document.getElementById('cameraContainer').classList.add('d-none');
+                document.getElementById('responsePage').classList.add('d-none');
+                //showCenteredBlock('Повторите попытку')
+                //nameHeader.textContent = 'Штатное расписание';
+                //document.getElementById('recognitionPage').classList.remove('d-none');
+                document.getElementById('responseToRecognition').classList.remove('d-none');
+                document.getElementById('responseToRecognitionNegative').style.display = 'flex';
+                //showLoadingOverlay();
+                //setTimeout(() => {
+                //    hideLoadingOverlay();
+                //}, 1000);
+                nameAdmin = '';
+            });
+
+            function setDivision() {
+                let division = getCookie('division');
+                console.log('division', division);
+                if (division) {
+                    document.getElementById('departmentMessage').textContent = division.name;
                 }
-            })
-            .catch(error => console.error('Error:', error));
-    });
-
-    document.getElementById('noButton').addEventListener('click', function() {
-        document.querySelectorAll('.container').forEach(function(element) {
-            element.classList.add('d-none');
-        });
-        document.getElementById('mainPage').classList.remove('d-none');
-        showCenteredBlock('Повторите, пожалуйста');
-    });
-
-    function showCenteredBlock(text) {
-        const block = document.createElement('div');
-        block.textContent = text;
-
-        block.style.position = 'fixed';
-        block.style.top = '50%';
-        block.style.left = '50%';
-        block.style.transform = 'translate(-50%, -50%)';
-        block.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-        block.style.color = '#fff';
-        block.style.padding = '20px';
-        block.style.borderRadius = '10px';
-        block.style.zIndex = '9999';
-        block.style.textAlign = 'center';
-        block.style.fontFamily = 'Arial, sans-serif';
-        block.style.fontSize = '1.2em';
-
-        document.body.appendChild(block);
-
-        setTimeout(() => {
-            block.remove();
-        }, 4000);
-    }
-
-    function setCookie(name, value, days) {
-        const date = new Date();
-        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-        const expires = "expires=" + date.toUTCString();
-        document.cookie = name + "=" + encodeURIComponent(JSON.stringify(value)) + ";" + expires + ";path=/";
-    }
-
-    function getCookie(name) {
-        const nameEQ = name + "=";
-        const ca = document.cookie.split(';');
-        for (let i = 0; i < ca.length; i++) {
-            let c = ca[i];
-            while (c.charAt(0) === ' ') c = c.substring(1, c.length);
-            if (c.indexOf(nameEQ) === 0) {
-                return JSON.parse(decodeURIComponent(c.substring(nameEQ.length, c.length)));
+                else {
+                    document.getElementById('departmentMessage').textContent = '';
+                }
             }
-        }
-        return null;
-    }
+            setDivision();
 
-    let division = getCookie('division');
-    if (division) {
-        document.getElementById('departmentMessage').textContent = 'Подразделение: ' + division.name;
-    }
+            if(departmentMessage.textContent != ''){
+                document.getElementById('startPage').style.display = 'none';
+                //document.getElementById('blockInfo').style.display = 'flex';
+                document.getElementById('recognitionPage').classList.remove('d-none');
+            }
+        </script>
 
-</script>
-
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>

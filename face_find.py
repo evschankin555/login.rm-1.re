@@ -1,5 +1,5 @@
 import face_recognition
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 import numpy as np
 import pickle
 
@@ -32,7 +32,8 @@ def send_find_user():
 
 # Функция для регистрации совпадений
 def register_match(unknown_image_name, code, similarity) -> str:
-    now = datetime.now()
+    msk_timezone = timezone(timedelta(hours=3))
+    now = datetime.now(msk_timezone)
     current_time = now.strftime("%Y-%m-%d %H:%M:%S")
     with open("matches_log.csv", "a") as log:
         log.write(f"{unknown_image_name},{code},{similarity:.2f},{current_time}\n")
@@ -76,3 +77,30 @@ def recognize_face(unknown_image_path):
         print(f"Неизвестное лицо: {unknown_image_path} - Не найдены лица на изображении")
 
     return {"ststus": "unknown"}
+
+
+def compare_faces(test_image_path, known_images_paths):
+    # Загрузить проверяемое фото и закодировать лицо на нем
+    test_image = face_recognition.load_image_file(test_image_path)
+    test_encoding = face_recognition.face_encodings(test_image)
+    
+    # Проверить, что на проверяемом фото есть хотя бы одно лицо
+    if len(test_encoding) == 0:
+        return False
+    
+    # Берем первую (и единственную) кодировку лица
+    test_encoding = test_encoding[0]
+
+    # Перебираем все известные фото и сравниваем с проверяемым лицом
+    for known_image_path in known_images_paths:
+        known_image = face_recognition.load_image_file(known_image_path)
+        known_encodings = face_recognition.face_encodings(known_image)
+        
+        # Проверим все лица на каждом из известных фото
+        for known_encoding in known_encodings:
+            # Сравниваем лица
+            results = face_recognition.compare_faces([known_encoding], test_encoding)
+            if results[0]:
+                print('results', results)
+                return True  # Найдено совпадение
+    return False  # Совпадений нет

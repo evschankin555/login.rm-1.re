@@ -3,7 +3,7 @@ import face_recognition
 import os
 import pickle
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # Путь к папке с известными лицами
 KNOWN_FACES_DIR = "images"
@@ -13,18 +13,23 @@ def update_face_base():
     known_encodings = []
     known_code = []
     known_dict = {}
+    start_update = datetime.now()
 
-    with open('fase_base_status.json', 'r', encoding='utf-8') as file:
+    with open('fase_base_status_new.json', 'r', encoding='utf-8') as file:
         fase_base_status = json.load(file)
 
-    if fase_base_status.get('last_update') == "в процессе":
+    last_run_update = datetime.strptime(fase_base_status.get('last_run_update'), '%Y-%m-%d %H:%M:%S.%f')
+
+    if (fase_base_status.get('last_update') == "в процессе") and (datetime.now() - last_run_update < timedelta(minutes=15)):
         return 'обновление в процессе'
 
     face_base = {
         "last_update": "в процессе",
-        "update_processing": True
+        "update_processing": True,
+        "last_run_update": fase_base_status.get('last_update'),
+        "start_update": str(datetime.now())
     }
-    with open('fase_base_status.json', 'w', encoding='utf-8') as file:
+    with open('fase_base_status_new.json', 'w', encoding='utf-8') as file:
         json.dump(face_base, file, ensure_ascii=False, indent=4)
 
     try:
@@ -35,7 +40,7 @@ def update_face_base():
                 img_path = os.path.join(KNOWN_FACES_DIR, filename)
                 image = face_recognition.load_image_file(img_path)
                 encodings = face_recognition.face_encodings(image)
-                print(filename, encodings)
+                #print(filename, encodings)
                 if encodings:                                     
                     #if not known_dict.get(person_name):
                     #    known_dict[person_name] = []
@@ -50,7 +55,7 @@ def update_face_base():
 
         known_dict['known_code'] = known_code
         known_dict['known_encodings'] = known_encodings
-        print(known_dict)
+        #print(known_dict)
 
         with open('dataset_faces.dat', 'wb') as f:
             pickle.dump(known_dict, f)
@@ -60,13 +65,15 @@ def update_face_base():
 
     face_base = {
         "last_update": str(datetime.now()),
-        "update_processing": False
+        "update_processing": False,
+        "last_run_update":  str(datetime.now()),
+        "update_time": str(datetime.now() - start_update)
     }
-    with open('fase_base_status.json', 'w', encoding='utf-8') as file:
+    with open('fase_base_status_new.json', 'w', encoding='utf-8') as file:
         json.dump(face_base, file, ensure_ascii=False, indent=4)
 
     return 'обновление завершено'
 
 
-if __name__ == "__main__":
-    update_face_base()
+if __name__ == "__main__": 
+    print(update_face_base())
